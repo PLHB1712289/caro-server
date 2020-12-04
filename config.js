@@ -1,9 +1,11 @@
 const PRODUCTION_ENVIRONMENT = {
   title: "production environment",
+  URL_CLIENT=process.env.URL_CLIENT
 };
 
 const DEVELOPMENT_ENVIRONMENT = {
   title: "development environment",
+  URL_CLIENT="http://localhost:3001"
 };
 
 const ENVIRONMENT =
