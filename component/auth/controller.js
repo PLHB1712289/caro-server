@@ -2,10 +2,14 @@ const service = require("./service");
 
 const controller = {
   POST_signIn: async (req, res) => {
-    const success = true;
-    const message = "Success";
+    const { username, password } = req.body;
 
-    res.send({ success, message });
+    const { success, message, token } = await service.signIn(
+      username,
+      password
+    );
+
+    res.send({ success, message, token });
   },
   POST_signInWithFB: async (req, res) => {
     const { id, accessToken } = req.body;
