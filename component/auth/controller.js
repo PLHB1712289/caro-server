@@ -18,10 +18,14 @@ const controller = {
     res.send({ success, message, token });
   },
   POST_signInWithGG: async (req, res) => {
-    const success = true;
-    const message = "Success";
+    const { id, accessToken } = req.body;
 
-    res.send({ success, message });
+    const { success, message, token } = await service.signInWithGG(
+      id,
+      accessToken
+    );
+
+    res.send({ success, message, token });
   },
 };
 

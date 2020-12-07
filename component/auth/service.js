@@ -44,7 +44,42 @@ const service = {
       return { success: false, message: "Failed", token: null };
     }
   },
-  signInWithGG: (accessToken) => {},
+  signInWithGG: async (id, accessToken) => {
+    const url = `https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${id}`;
+
+    const query = {};
+
+    try {
+      // get in4 user on FB
+      const response = await axiosClient.post(url, query);
+      const { email } = response;
+
+      // check user in DB
+      let user = await userModel.findOne({ email });
+
+      // create new user if not exist
+      if (!user) {
+        user = await new userModel({ email }).save();
+      }
+
+      // create payload to sign with JWT
+      const payload = {
+        id: user._id,
+      };
+
+      // create token JWT
+      const token = jwt.sign(payload, config.SECRET_KEY_JWT);
+
+      // return Success
+      return { success: true, message: "Success", token };
+    } catch (e) {
+      // When id or accesstoken is not good, GG will throw error
+      console.log("[ERROR]: ", e.message);
+
+      // return Failed
+      return { success: false, message: "Failed", token: null };
+    }
+  },
 };
 
 module.exports = service;
