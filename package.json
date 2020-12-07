@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "start": "ENVIRONMENT=PRODUCTION node ./bin/www",
+    "start": "node ./bin/www",
     "devMac": "PORT=3000 ENVIRONMENT=DEVELOPMENT nodemon ./bin/www",
     "devWin": "set PORT=3000 && ENVIRONMENT=DEVELOPMENT && nodemon ./bin/www"
   },
