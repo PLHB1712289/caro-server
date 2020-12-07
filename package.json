@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "start": "ENVIRONMENT=PRODUCTION node ./bin/www",
-    "dev": "PORT=3000 ENVIRONMENT=DEVELOPMENT nodemon ./bin/www"
+    "devMac": "PORT=3000 ENVIRONMENT=DEVELOPMENT nodemon ./bin/www",
+    "devWin": "set PORT=3000 && ENVIRONMENT=DEVELOPMENT && nodemon ./bin/www"
   },
   "dependencies": {
     "axios": "^0.21.0",
