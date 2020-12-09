@@ -17,9 +17,30 @@ app.set("port", port);
 
 /**
  * Create HTTP server.
+ * Socket.io
  */
 
+// Bien luu so nguoi online
+let numOfOnlineUsers = 0;
+
 const server = http.createServer(app);
+const io = require("socket.io")(server);
+io.on("connection", (client) => {
+  numOfOnlineUsers++;
+  client.broadcast.emit("updateNumOfOnlineUsers", numOfOnlineUsers);
+  client.emit("updateNumOfOnlineUsers", numOfOnlineUsers);
+  // client.on('event', data => { /* … */ });
+  client.on("disconnect", () => {
+    numOfOnlineUsers--;
+    client.broadcast.emit("updateNumOfOnlineUsers", numOfOnlineUsers);
+  });
+});
+
+io.on("connection", (socket) => {
+  socket.on("disconnect", (reason) => {
+    // ...
+  });
+});
 
 /**
  * Listen on provided port, on all network interfaces.
