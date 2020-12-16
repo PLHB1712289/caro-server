@@ -4,7 +4,7 @@ module.exports = mongoose.model(
     "game",
     new mongoose.Schema({
         name: String,
-        squares:Array(900).fill(null),
+        squares:String,
         player1: String,
         player1: String,
     })

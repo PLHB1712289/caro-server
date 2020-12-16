@@ -16,6 +16,7 @@ const cors = require("cors");
 
 const indexRouter = require("./routes/index");
 const authRouter = require("./component/auth");
+const createNewGame = require("./component/createNewGame");
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use(cookieParser());
 
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
+app.use("/game", createNewGame);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
