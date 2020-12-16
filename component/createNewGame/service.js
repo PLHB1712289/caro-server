@@ -2,8 +2,6 @@ let Game = require("../../database/schema/game");
 let Square = require("../../database/schema/square");
 const service = {
   createNewGame: async (name, player1) => {
-    console.log(name);
-
     try {
       const newGame = await new Game({
         name,
@@ -28,18 +26,18 @@ const service = {
       return { success: false, message: "Failed" };
     }
   },
-  accessGame: async (idGame) => {
-    console.log(idGame);
+  accessGame: async (idGame, idPlayer2) => {
+    console.log("idPlayer2", idPlayer2);
     try {
-      Game.findById(idGame, (err, game) => {
-        if (!game) return { success: false, message: "Not have game" };
-        else {
-          console.log(game);
-          game.player2 = "player 2 id";
+      const game = await Game.findOne({ id: idGame });
 
-          game.save();
-        }
-      });
+      console.log("game", game);
+
+      if (!game) {
+        game.player2 = idPlayer2;
+
+        game.save();
+      }
 
       return { success: true, message: "Success" };
     } catch (e) {
