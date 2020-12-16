@@ -2,7 +2,14 @@ const SOCKET_TAG = require("./dataConst");
 
 let numOfOnlineUsers = 0;
 
-const config = (io) => {
+const socketio = require("socket.io");
+let io = null;
+
+const config = (server) => {
+  io = socketio(server, {
+    cors: true,
+    origins: ["http://127.0.0.1:3000"],
+  });
   io.on("connection", (socket) => {
     // update
     numOfOnlineUsers++;
@@ -32,8 +39,7 @@ const config = (io) => {
       });
     });
   });
+  console.log("Config socket.io success");
 };
 
-console.log("Config socket.io success");
-
-module.exports = { config };
+module.exports = { io, config };

@@ -1,6 +1,7 @@
-const Game = require("../../database/schema/game");
-const Square = require("../../database/schema/square");
 const messageModel = require("../../database/schema/message");
+let Game = require("../../database/schema/game");
+let Square = require("../../database/schema/square");
+let History = require("../../database/schema/history");
 
 const service = {
   createNewGame: async (name, player1) => {
@@ -8,19 +9,20 @@ const service = {
       const newGame = await new Game({
         name,
         player1,
-        player2:"Player2",
-        squares: null,
+        player2: "Player2",
+        squares: Array(900).fill(null),
+        nextMove: player1,
       }).save();
 
-      let squares = Array(900).fill(null);
+      // let squares = Array(900).fill(null);
 
-      for (let i = 9; i < 900; i++) {
-        const newSquare = new Square({
-          value: squares[i],
-          game: newGame.name,
-        });
-      }
-      return { success: true, message: "Success", game: newGame };
+      // for (let i = 9; i < 900; i++) {
+      //   const newSquare = new Square({
+      //     value: squares[i],
+      //     game: newGame.name,
+      //   });
+      // }
+      return { success: true, message: "Success", id: newGame._id };
     } catch (e) {
       console.log("[ERROR]: ", e.message);
 
@@ -102,6 +104,47 @@ const service = {
         message: "Send message failed",
         listMessage: null,
       };
+    }
+  },
+  getGame: async (idGame) => {
+    try {
+      const game = await Game.findOne({ _id: idGame });
+
+      return game;
+    } catch (e) {
+      console.log("[ERROR]: ", e.message);
+    }
+  },
+  makeAMove: async (idGame, idPlayer, position) => {
+    console.log("idPlayer", idPlayer);
+    try {
+      const game = await Game.findOne({ _id: idGame });
+
+      console.log("game", game);
+
+      if (game) {
+        // if (game.nextMove !== idPlayer)
+        //   throw new Error("Nguoi choi khong duoc di nuoc di nay");
+        // Update nguoi di ke tiep
+        game.nextMove = idPlayer === game.player1 ? game.player2 : game.player1;
+        // Update ban co
+        game.squares[position] = "x";
+        console.log(game.squares[position]);
+        game.save();
+        // Them lich su di
+        await new History({
+          game: idGame,
+          player: idPlayer,
+          position,
+        }).save();
+      }
+
+      return { success: true, message: "Success" };
+    } catch (e) {
+      console.log("[ERROR]: ", e.message);
+
+      // return Failed
+      return { success: false, message: "Failed" };
     }
   },
 };

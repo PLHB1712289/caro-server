@@ -1,14 +1,15 @@
 const service = require("./service");
+const { io } = require("../../socket.io");
 
 const controller = {
   POST_createNewGame: async (req, res) => {
     const { name } = req.body;
     console.log(req.user);
-    const { success, message, game } = await service.createNewGame(
+    const { success, message, id } = await service.createNewGame(
       name,
       req.user.id
     );
-    res.send({ success, message, game });
+    res.send({ success, message, id });
   },
 
   POST_accessGame: async (req, res) => {
@@ -45,6 +46,26 @@ const controller = {
     });
 
     res.send({ success, message, listMessage });
+  },
+  POST_makeAMove: async (req, res) => {
+    const { idGame, position } = req.body;
+    const idPlayer = req.user.id;
+    const { success, message } = await service.makeAMove(
+      idGame,
+      idPlayer,
+      position
+    );
+    // Broadcast
+    if (success) {
+      // do sth
+    }
+    res.send({ success, message });
+  },
+
+  GET_getGame: async (req, res) => {
+    const idGame = req.params.id;
+    const game = await service.getGame(idGame);
+    res.send(game);
   },
 };
 
