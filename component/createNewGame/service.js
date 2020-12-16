@@ -6,7 +6,7 @@ const service = {
       const newGame = await new Game({
         name,
         player1,
-        player2: "Player2",
+        player2:"Player2",
         squares: null,
       }).save();
 
@@ -29,11 +29,13 @@ const service = {
   accessGame: async (idGame, idPlayer2) => {
     console.log("idPlayer2", idPlayer2);
     try {
-      const game = await Game.findOne({ id: idGame });
-
+      const game = await Game.findOne({ _id: idGame });
+      console.log("Check game in accessGame");
+      console.log(idGame);
       console.log("game", game);
-
-      if (!game) {
+      console.log("Check id player 2");
+      console.log(idPlayer2);
+      if (game) {
         game.player2 = idPlayer2;
 
         game.save();
