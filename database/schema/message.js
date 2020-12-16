@@ -6,6 +6,6 @@ module.exports = mongoose.model(
     idGame: String,
     idUser: String,
     message: String,
-    date: Number,
+    created_at: { type: Date, default: Date.now },
   })
 );

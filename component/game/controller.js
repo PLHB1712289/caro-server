@@ -1,10 +1,12 @@
 const service = require("./service");
-const { io } = require("../../socket.io");
+const { getIO } = require("../../socket.io");
 
 const controller = {
+  // Tao game moi
   POST_createNewGame: async (req, res) => {
+    // Ten game
     const { name } = req.body;
-    console.log(req.user);
+    // Lay id cua game
     const { success, message, id } = await service.createNewGame(
       name,
       req.user.id
@@ -12,17 +14,15 @@ const controller = {
     res.send({ success, message, id });
   },
 
+  // Tham gia game
   POST_accessGame: async (req, res) => {
     const { idGame } = req.body;
-    console.log("Check id game of access game");
-    console.log(req.body);
     const idPlayer2 = req.user.id;
-    console.log("Check req.user cua access game");
-    console.log(req.user);
     const { success, message } = await service.accessGame(idGame, idPlayer2);
     res.send({ success, message });
   },
 
+  // Gui tin nhan
   POST_sendMessage: async (req, res) => {
     const idUser = req.user.id;
     const { idGame, message: contentMessage } = req.body;
@@ -36,6 +36,7 @@ const controller = {
     res.send({ success, message });
   },
 
+  // Lay tin nhan
   GET_getMessage: async (req, res) => {
     const idGame = req.query.id;
     const idUser = req.user.id;
@@ -47,25 +48,29 @@ const controller = {
 
     res.send({ success, message, listMessage });
   },
+
+  // Di mot nuoc di
   POST_makeAMove: async (req, res) => {
-    const { idGame, position } = req.body;
+    const { position } = req.body;
+    const { id: idGame } = req.params;
     const idPlayer = req.user.id;
-    const { success, message } = await service.makeAMove(
+    const { success, message, move } = await service.makeAMove(
       idGame,
       idPlayer,
       position
     );
     // Broadcast
     if (success) {
-      // do sth
+      getIO().emit("update-board", move);
     }
-    res.send({ success, message });
+    res.send({ success, message, move });
   },
 
+  // Lay mot van choi
   GET_getGame: async (req, res) => {
     const idGame = req.params.id;
-    const game = await service.getGame(idGame);
-    res.send(game);
+    const { success, message, game } = await service.getGame(idGame);
+    res.send({ success, message, game });
   },
 };
 

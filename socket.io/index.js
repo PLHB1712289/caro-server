@@ -5,6 +5,10 @@ let numOfOnlineUsers = 0;
 const socketio = require("socket.io");
 let io = null;
 
+const getIO = () => {
+  return io;
+};
+
 const config = (server) => {
   io = socketio(server, {
     cors: true,
@@ -42,4 +46,4 @@ const config = (server) => {
   console.log("Config socket.io success");
 };
 
-module.exports = { io, config };
+module.exports = { getIO, config };
