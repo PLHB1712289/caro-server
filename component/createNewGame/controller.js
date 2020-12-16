@@ -18,6 +18,31 @@ const controller = {
     const { success, message } = await service.accessGame(idGame, idPlayer2);
     res.send({ success, message });
   },
+
+  POST_sendMessage: async (req, res) => {
+    const idUser = req.user.id;
+    const { idGame, message: contentMessage } = req.body;
+
+    const { success, message } = await service.sendMessage({
+      idGame,
+      idUser,
+      message: contentMessage,
+    });
+
+    res.send({ success, message });
+  },
+
+  GET_getMessage: async (req, res) => {
+    const idGame = req.query.id;
+    const idUser = req.user.id;
+
+    const { success, message, listMessage } = await service.getMessage({
+      idGame,
+      idUser,
+    });
+
+    res.send({ success, message, listMessage });
+  },
 };
 
 module.exports = controller;

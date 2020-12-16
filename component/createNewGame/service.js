@@ -1,5 +1,7 @@
-let Game = require("../../database/schema/game");
-let Square = require("../../database/schema/square");
+const Game = require("../../database/schema/game");
+const Square = require("../../database/schema/square");
+const messageModel = require("../../database/schema/message");
+
 const service = {
   createNewGame: async (name, player1) => {
     try {
@@ -45,6 +47,59 @@ const service = {
 
       // return Failed
       return { success: false, message: "Failed" };
+    }
+  },
+  sendMessage: async ({ idGame, idUser, message }) => {
+    const date = new Date();
+    try {
+      const newMessage = await new messageModel({
+        idGame,
+        idUser,
+        message,
+        date,
+      }).save();
+
+      return { success: true, message: "Send message success" };
+    } catch (e) {
+      console.log(`[ERROR-GAME]: ${e.message}`);
+      return { success: false, message: "Send message failed" };
+    }
+  },
+
+  getMessage: async ({ idGame, idUser }) => {
+    try {
+      const listMessage = await messageModel.find({ idGame });
+
+      if (listMessage) {
+        return {
+          success: true,
+          message: "Send message success",
+          listMessage: listMessage.map((item) => {
+            if (idUser === item.idUser) {
+              return {
+                contentMessage: item.message,
+                username: "You",
+                type: "1",
+              };
+            } else {
+              return {
+                contentMessage: item.message,
+                username: "Player 2",
+                type: "2",
+              };
+            }
+          }),
+        };
+      }
+
+      return { success: true, message: "Send message success", listMessage };
+    } catch (e) {
+      console.log(`[ERROR-GAME]: ${e.message}`);
+      return {
+        success: false,
+        message: "Send message failed",
+        listMessage: null,
+      };
     }
   },
 };

@@ -12,6 +12,18 @@ const config = (io) => {
       numberUser: numOfOnlineUsers,
     });
 
+    // send message
+    socket.on(SOCKET_TAG.REQUEST_JOIN_GAME, ({ idGame }) => {
+      socket.join(idGame);
+    });
+
+    // send message
+    socket.on(SOCKET_TAG.REQUEST_SEND_MESSAGE, ({ idGame, message }) => {
+      socket.to(idGame).emit(SOCKET_TAG.RESPONSE_SEND_MESSAGE, {
+        message,
+      });
+    });
+
     // event disconnect
     socket.on("disconnect", () => {
       numOfOnlineUsers--;
