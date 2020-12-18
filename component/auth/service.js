@@ -9,10 +9,15 @@ const service = {
     console.log(username, password);
     try {
       // check user in DB
-      let user = await userModel.findOne({ email: `${username}` });
+      let user = await userModel.findOne({ username });
 
       //
       if (user) {
+        // check active status
+        if (user.isActive === false) {
+          return { success: false, message: "Account is locked", token: null };
+        }
+
         // check password
         const passwordHash = user.password || "";
         if (!bcrypt.compareSync(password, passwordHash)) {
@@ -134,6 +139,39 @@ const service = {
         message: "Cannot get list user online",
         data: null,
       };
+    }
+  },
+
+  signUp: async (username, email, password) => {
+    try {
+      let user = await userModel.findOne({ username });
+      let userEmail = await userModel.findOne({ email });
+
+      if (userEmail) {
+        return {
+          success: false,
+          message: "Email is already in used, please use another email!",
+        };
+      }
+
+      if (!user) {
+        const hashPassword = bcrypt.hashSync(password, config.SECRET_KEY_HASH);
+        user = await new userModel({
+          username,
+          email,
+          password: hashPassword,
+          role: false,
+          online: false,
+          isActive: false,
+        }).save();
+
+        return { success: true, message: "Sign in success" };
+      }
+
+      return { success: false, message: "Sign up failed, user already exist" };
+    } catch (e) {
+      console.log(`[ERROR-SIGNIN]: ${e.message}`);
+      return { success: false, message: "Cannot connect database" };
     }
   },
 };

@@ -38,6 +38,19 @@ const controller = {
 
     res.send({ success, message, data });
   },
+
+  POST_signUp: async (req, res) => {
+    const { username, email, password } = req.body;
+    console.log("req.body", req.body);
+
+    const { success, message } = await service.signUp(
+      username,
+      email,
+      password
+    );
+
+    res.send({ success, message });
+  },
 };
 
 module.exports = controller;

@@ -3,10 +3,12 @@ const mongoose = require("mongoose");
 module.exports = mongoose.model(
   "user",
   new mongoose.Schema({
-    fullname: String,
-    password: String,
+    username: String,
     email: String,
+    password: String,
     online: Boolean,
+    role: Boolean,
+    isActive: Boolean,
   })
 );
 
