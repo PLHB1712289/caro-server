@@ -21,6 +21,7 @@ const controller = {
 
     res.send({ success, message, token });
   },
+
   POST_signInWithGG: async (req, res) => {
     const { id, accessToken } = req.body;
 
@@ -30,6 +31,12 @@ const controller = {
     );
 
     res.send({ success, message, token });
+  },
+
+  GET_userOnline: async (req, res) => {
+    const { success, message, data } = await service.getUserOnline();
+
+    res.send({ success, message, data });
   },
 };
 

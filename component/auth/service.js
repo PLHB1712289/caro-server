@@ -115,6 +115,27 @@ const service = {
       return { success: false, message: "Failed", token: null };
     }
   },
+
+  getUserOnline: async () => {
+    try {
+      const listUserOnline = await userModel
+        .find({ online: true })
+        .select("fullname");
+
+      return {
+        success: true,
+        message: "Get list user online success",
+        data: { listUserOnline },
+      };
+    } catch (e) {
+      console.log(`[ERROR-USER_ONLINE]: ${e.message}`);
+      return {
+        success: false,
+        message: "Cannot get list user online",
+        data: null,
+      };
+    }
+  },
 };
 
 module.exports = service;
