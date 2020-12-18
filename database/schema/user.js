@@ -3,9 +3,12 @@ const mongoose = require("mongoose");
 module.exports = mongoose.model(
   "user",
   new mongoose.Schema({
-    password: String,
+    username: String,
     email: String,
-    urlAvatar: String,
+    password: String,
+    online: Boolean,
+    role: Boolean,
+    active: String,
   })
 );
 

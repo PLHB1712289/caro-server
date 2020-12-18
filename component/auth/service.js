@@ -3,16 +3,22 @@ const axiosClient = require("../../apiClient");
 const { userModel } = require("../../database/schema");
 const config = require("../../config");
 const bcrypt = require("bcryptjs");
+const { generateGUID, sendMail } = require("../../util");
 
 const service = {
   signIn: async (username, password) => {
     console.log(username, password);
     try {
       // check user in DB
-      let user = await userModel.findOne({ email: `${username}` });
+      let user = await userModel.findOne({ username });
 
       //
       if (user) {
+        // check active status
+        if (user.active !== "activated") {
+          return { success: false, message: "Account is locked", token: null };
+        }
+
         // check password
         const passwordHash = user.password || "";
         if (!bcrypt.compareSync(password, passwordHash)) {
@@ -115,6 +121,90 @@ const service = {
       return { success: false, message: "Failed", token: null };
     }
   },
+
+  getUserOnline: async () => {
+    try {
+      const listUserOnline = await userModel
+        .find({ online: true })
+        .select("fullname");
+
+      return {
+        success: true,
+        message: "Get list user online success",
+        data: { listUserOnline },
+      };
+    } catch (e) {
+      console.log(`[ERROR-USER_ONLINE]: ${e.message}`);
+      return {
+        success: false,
+        message: "Cannot get list user online",
+        data: null,
+      };
+    }
+  },
+
+  signUp: async (username, email, password) => {
+    try {
+      let user = await userModel.findOne({ username });
+      let userEmail = await userModel.findOne({ email });
+
+      if (userEmail) {
+        return {
+          success: false,
+          message: "Email is already in used, please use another email!",
+        };
+      }
+
+      if (!user) {
+        const hashPassword = bcrypt.hashSync(password, config.SECRET_KEY_HASH);
+        const codeActive = generateGUID();
+
+        user = await new userModel({
+          username,
+          email,
+          password: hashPassword,
+          role: false,
+          online: false,
+          active: codeActive,
+        }).save();
+
+        // send mail active
+        sendMail.sendMailActive(email, username, user._id, codeActive);
+
+        return {
+          success: true,
+          message:
+            "Sign in success, please check mail to activate your account",
+        };
+      }
+
+      return { success: false, message: "Sign up failed, user already exist." };
+    } catch (e) {
+      console.log(`[ERROR-SIGNIN]: ${e.message}`);
+      return { success: false, message: "Cannot connect to database." };
+    }
+  },
+
+  activeAccount: async (id, code) => {
+    try {
+      const user = await userModel.findOne({ _id: id, active: code });
+
+      if (user) {
+        user.active = "activated";
+        await user.save();
+        return {
+          success: true,
+          message: `Active account success, access <a href="${config.URL_CLIENT}"> caro </a> to sign in.`,
+        };
+      }
+
+      return { success: false, message: "Active account failed." };
+    } catch (e) {
+      return { success: false, message: "Cannot connect to database." };
+    }
+  },
 };
+
+// console.log(createMail.mailActive("1234"));
 
 module.exports = service;
