@@ -3,6 +3,7 @@ const axiosClient = require("../../apiClient");
 const { userModel } = require("../../database/schema");
 const config = require("../../config");
 const bcrypt = require("bcryptjs");
+const { generateGUID, sendMail } = require("../../util");
 
 const service = {
   signIn: async (username, password) => {
@@ -14,7 +15,7 @@ const service = {
       //
       if (user) {
         // check active status
-        if (user.isActive === false) {
+        if (user.active !== "activated") {
           return { success: false, message: "Account is locked", token: null };
         }
 
@@ -156,24 +157,54 @@ const service = {
 
       if (!user) {
         const hashPassword = bcrypt.hashSync(password, config.SECRET_KEY_HASH);
+        const codeActive = generateGUID();
+
         user = await new userModel({
           username,
           email,
           password: hashPassword,
           role: false,
           online: false,
-          isActive: false,
+          active: codeActive,
         }).save();
 
-        return { success: true, message: "Sign in success" };
+        // send mail active
+        sendMail.sendMailActive(email, username, user._id, codeActive);
+
+        return {
+          success: true,
+          message:
+            "Sign in success, please check mail to activate your account",
+        };
       }
 
-      return { success: false, message: "Sign up failed, user already exist" };
+      return { success: false, message: "Sign up failed, user already exist." };
     } catch (e) {
       console.log(`[ERROR-SIGNIN]: ${e.message}`);
-      return { success: false, message: "Cannot connect database" };
+      return { success: false, message: "Cannot connect to database." };
+    }
+  },
+
+  activeAccount: async (id, code) => {
+    try {
+      const user = await userModel.findOne({ _id: id, active: code });
+
+      if (user) {
+        user.active = "activated";
+        await user.save();
+        return {
+          success: true,
+          message: `Active account success, access <a href="${config.URL_CLIENT}"> caro </a> to sign in.`,
+        };
+      }
+
+      return { success: false, message: "Active account failed." };
+    } catch (e) {
+      return { success: false, message: "Cannot connect to database." };
     }
   },
 };
+
+// console.log(createMail.mailActive("1234"));
 
 module.exports = service;

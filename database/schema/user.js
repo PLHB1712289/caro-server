@@ -8,7 +8,7 @@ module.exports = mongoose.model(
     password: String,
     online: Boolean,
     role: Boolean,
-    isActive: Boolean,
+    active: String,
   })
 );
 

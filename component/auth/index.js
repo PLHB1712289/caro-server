@@ -8,4 +8,6 @@ router.get("/user-online", controller.GET_userOnline);
 
 router.post("/sign-up", controller.POST_signUp);
 
+router.get("/active", controller.GET_active);
+
 module.exports = router;

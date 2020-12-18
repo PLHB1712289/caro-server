@@ -41,7 +41,6 @@ const controller = {
 
   POST_signUp: async (req, res) => {
     const { username, email, password } = req.body;
-    console.log("req.body", req.body);
 
     const { success, message } = await service.signUp(
       username,
@@ -50,6 +49,15 @@ const controller = {
     );
 
     res.send({ success, message });
+  },
+
+  GET_active: async (req, res) => {
+    const { id, code } = req.query;
+    console.log(id, code);
+
+    const { message } = await service.activeAccount(id, code);
+
+    res.send(message);
   },
 };
 
