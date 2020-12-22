@@ -20,6 +20,7 @@ const cors = require("cors");
 const indexRouter = require("./routes");
 const authRouter = require("./component/auth");
 const gameRouter = require("./component/game");
+const anonymousRouter = require("./component/anonymous");
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use(passport.initialize());
 app.use("/", indexRouter);
 app.use("/auth", authRouter);
 app.use("/game", gameRouter);
+app.use("/anonymous", anonymousRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

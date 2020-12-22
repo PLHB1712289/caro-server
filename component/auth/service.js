@@ -122,27 +122,6 @@ const service = {
     }
   },
 
-  getUserOnline: async () => {
-    try {
-      const listUserOnline = await userModel
-        .find({ online: true })
-        .select("fullname");
-
-      return {
-        success: true,
-        message: "Get list user online success",
-        data: { listUserOnline },
-      };
-    } catch (e) {
-      console.log(`[ERROR-USER_ONLINE]: ${e.message}`);
-      return {
-        success: false,
-        message: "Cannot get list user online",
-        data: null,
-      };
-    }
-  },
-
   signUp: async (username, email, password) => {
     try {
       let user = await userModel.findOne({ username });

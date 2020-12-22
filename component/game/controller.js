@@ -72,11 +72,6 @@ const controller = {
     const { success, message, game } = await service.getGame(idGame);
     res.send({ success, message, data: { game } });
   },
-
-  GET_listRoom: async (req, res) => {
-    const { success, message, data } = await service.getListRoom();
-    res.send({ success, message, data });
-  },
 };
 
 module.exports = controller;

@@ -35,12 +35,6 @@ const controller = {
     res.send({ success, message, data: { token } });
   },
 
-  GET_userOnline: async (req, res) => {
-    const { success, message, data } = await service.getUserOnline();
-
-    res.send({ success, message, data });
-  },
-
   POST_signUp: async (req, res) => {
     const { username, email, password } = req.body;
 
