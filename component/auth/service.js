@@ -3,7 +3,8 @@ const axiosClient = require("../../apiClient");
 const { userModel } = require("../../database/schema");
 const config = require("../../config");
 const bcrypt = require("bcryptjs");
-const { generateGUID, sendMail } = require("../../util");
+const { generateGUID, sendMail, generateUsername } = require("../../util");
+const { service: serviceIO } = require("../../socket.io");
 
 const service = {
   signIn: async (username, password) => {
@@ -27,12 +28,16 @@ const service = {
 
         // create payload to sign with JWT
         const payload = {
-          id: user._id,
+          id: user.id,
         };
 
         // create token JWT
         const token = jwt.sign(payload, config.SECRET_KEY_JWT);
 
+        user.isOnline = true;
+        await user.save();
+
+        serviceIO.updateUserOnline(user);
         // return Success
         return { success: true, message: "Success", token };
       }
@@ -50,31 +55,37 @@ const service = {
     const url = `https://graph.facebook.com/${id}`;
 
     const query = {
-      fields: "email",
+      fields: "email,name",
       access_token: `${accessToken}`,
     };
 
     try {
       // get in4 user on FB
       const response = await axiosClient.post(url, query);
-      const { email } = response;
+      const { email, name } = response;
 
       // check user in DB
       let user = await userModel.findOne({ email });
 
       // create new user if not exist
       if (!user) {
-        user = await new userModel({ email }).save();
+        user = await new userModel({
+          email,
+          username: generateUsername(name),
+        }).save();
       }
 
       // create payload to sign with JWT
       const payload = {
-        id: user._id,
+        id: user.id,
       };
 
       // create token JWT
       const token = jwt.sign(payload, config.SECRET_KEY_JWT);
 
+      user.isOnline = true;
+      await user.save();
+      serviceIO.updateUserOnline(user);
       // return Success
       return { success: true, message: "Success", token };
     } catch (e) {
@@ -93,24 +104,31 @@ const service = {
     try {
       // get in4 user on FB
       const response = await axiosClient.post(url, query);
-      const { email } = response;
+      const { email, name } = response;
 
       // check user in DB
       let user = await userModel.findOne({ email });
 
       // create new user if not exist
       if (!user) {
-        user = await new userModel({ email }).save();
+        user = await new userModel({
+          email,
+          username: generateUsername(name),
+        }).save();
       }
 
       // create payload to sign with JWT
       const payload = {
-        id: user._id,
+        id: user.id,
       };
 
       // create token JWT
       const token = jwt.sign(payload, config.SECRET_KEY_JWT);
 
+      user.isOnline = true;
+      await user.save();
+
+      serviceIO.updateUserOnline(user);
       // return Success
       return { success: true, message: "Success", token };
     } catch (e) {

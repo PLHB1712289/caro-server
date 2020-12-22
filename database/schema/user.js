@@ -10,7 +10,7 @@ module.exports = mongoose.model(
     password: { type: String, default: null },
     isOnline: { type: Boolean, default: false }, // true: online - false: offline
     isAdmin: { type: Boolean, default: false }, // true: admin - false: customer
-    active: String,
+    active: { type: String, default: "activated" },
     totalGame: { type: Number, default: 0 },
     totalGameWin: { type: Number, default: 0 },
     totalGameLose: { type: Number, default: 0 },
