@@ -1,5 +1,5 @@
-const messageModel = require("../../database/schema/message");
-let Game = require("../../database/schema/game");
+const { messageModel, gameModel, roomModel } = require("../../database/schema");
+const { generateIDRoom } = require("../../util");
 
 const service = {
   createNewGame: async (name, player1) => {
@@ -17,7 +17,7 @@ const service = {
 
   accessGame: async (idGame, idPlayer2) => {
     try {
-      const game = await Game.findOne({ _id: idGame });
+      const game = await gameModel.findOne({ _id: idGame });
       if (game && !game.player2) {
         game.player2 = idPlayer2;
         game.save();
@@ -83,7 +83,7 @@ const service = {
 
   getGame: async (idGame) => {
     try {
-      const game = await Game.findOne({ _id: idGame });
+      const game = await gameModel.findOne({ _id: idGame });
       return { success: true, message: "Success", game };
     } catch (e) {
       console.log("[ERROR]: ", e.message);
@@ -93,7 +93,7 @@ const service = {
 
   makeAMove: async (idGame, idPlayer, position) => {
     try {
-      const game = await Game.findOne({ _id: idGame });
+      const game = await gameModel.findOne({ _id: idGame });
       if (game) {
         // Kiem tra da co nguoi choi 2 chua
         if (!game.player2) throw new Error("Vui long cho nguoi choi 2");
@@ -124,6 +124,58 @@ const service = {
     } catch (e) {
       console.log("[ERROR]: ", e.message);
       return { success: false, message: "Failed" };
+    }
+  },
+
+  getListRoom: async () => {
+    try {
+      // await new roomModel({
+      //   name: "baobao",
+      //   player1: "bao",
+      //   player2: "hoai",
+      // }).save();
+
+      const listRoom = await roomModel
+        .find({ isOpen: true })
+        .select([
+          "-_id",
+          "idRoom",
+          "name",
+          "gameCurrent",
+          "password",
+          "player1",
+          "player2",
+        ])
+        .sort("field: -created_at");
+
+      return {
+        success: true,
+        message: "Get list room success",
+        data: {
+          listRoom: listRoom.map((item, index) => {
+            const {
+              idRoom: id,
+              name,
+              gameCurrent,
+              password,
+              player1,
+              player2,
+            } = item;
+            return {
+              no: index + 1,
+              id,
+              name,
+              status: !gameCurrent ? "waiting" : "playing",
+              isLock: password ? true : false,
+              player1,
+              player2,
+            };
+          }),
+        },
+      };
+    } catch (e) {
+      console.log(`[ERROR]: ${e.message}`);
+      return { success: false, message: "Get list room failed", data: null };
     }
   },
 };

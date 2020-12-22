@@ -3,23 +3,11 @@ const mongoose = require("mongoose");
 module.exports = mongoose.model(
   "game",
   new mongoose.Schema({
-    name: String,
-    squares: {
-      type: [
-        {
-          position: Number,
-          checker: Number,
-          created_at: {
-            type: Date,
-            default: Date.now,
-          },
-        },
-      ],
-      default: [],
-    },
+    idRoom: String,
     player1: String,
     player2: { type: String, default: null },
-    nextMove: { type: Number, default: 1 },
+    status: Boolean, // true: playing - false: finished
+    winner: { type: String, default: null },
     created_at: { type: Date, default: Date.now },
   })
 );

@@ -9,7 +9,7 @@ const controller = {
       password
     );
 
-    res.send({ success, message, token });
+    res.send({ success, message, data: { token } });
   },
   POST_signInWithFB: async (req, res) => {
     const { id, accessToken } = req.body;
@@ -19,18 +19,20 @@ const controller = {
       accessToken
     );
 
-    res.send({ success, message, token });
+    res.send({ success, message, data: { token } });
   },
 
   POST_signInWithGG: async (req, res) => {
     const { id, accessToken } = req.body;
+
+    console.log(req.body);
 
     const { success, message, token } = await service.signInWithGG(
       id,
       accessToken
     );
 
-    res.send({ success, message, token });
+    res.send({ success, message, data: { token } });
   },
 
   GET_userOnline: async (req, res) => {

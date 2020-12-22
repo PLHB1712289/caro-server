@@ -46,7 +46,7 @@ const controller = {
       idUser,
     });
 
-    res.send({ success, message, listMessage });
+    res.send({ success, message, data: { listMessage } });
   },
 
   // Di mot nuoc di
@@ -63,14 +63,19 @@ const controller = {
     if (success) {
       getIO().emit("update-board", move);
     }
-    res.send({ success, message, move });
+    res.send({ success, message, data: { move } });
   },
 
   // Lay mot van choi
   GET_getGame: async (req, res) => {
     const idGame = req.params.id;
     const { success, message, game } = await service.getGame(idGame);
-    res.send({ success, message, game });
+    res.send({ success, message, data: { game } });
+  },
+
+  GET_listRoom: async (req, res) => {
+    const { success, message, data } = await service.getListRoom();
+    res.send({ success, message, data });
   },
 };
 

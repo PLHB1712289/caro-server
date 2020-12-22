@@ -9,6 +9,9 @@ module.exports = mongoose.model(
     online: Boolean,
     role: Boolean,
     active: String,
+    totalGame: Number,
+    totalGameWin: Number,
+    totalGameLose: Number,
   })
 );
 
