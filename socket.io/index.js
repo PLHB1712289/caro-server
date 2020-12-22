@@ -2,6 +2,7 @@ const SOCKET_TAG = require("./data");
 const socketio = require("socket.io");
 const { getIDUserFromToken } = require("../util");
 const { userModel } = require("../database/schema");
+const configFile = require("../config");
 
 let listUserOnline = [];
 
@@ -14,7 +15,7 @@ const getIO = () => {
 const config = (server) => {
   io = socketio(server, {
     cors: true,
-    origins: ["http://127.0.0.1:3000"],
+    origins: [`${configFile.URL_SERVER}:${process.env.PORT}`],
   });
 
   io.on("connection", (socket) => {
@@ -25,32 +26,28 @@ const config = (server) => {
     // Receive request update user online when user connect (user logged in before ~ user already have a token)
     socket.on(SOCKET_TAG.REQUEST_USER_ONLINE, async ({ token }) => {
       // Parse user' id from token
-      const idUser = getIDUserFromToken(token);
+      const id = getIDUserFromToken(token);
 
       // Push user into listUserOnline
       listUserOnline.push({
         idSocket: socket.id,
-        idUser,
+        idUser: id,
       });
 
       // Find user on database
-      const user = await userModel.findOne({ id: idUser });
+      const user = await (await userModel.findOne({ id })).isSelected([
+        "id",
+        "username",
+        "totalGame",
+        "totalGameWin",
+        "totalGameLose",
+      ]);
 
       // Update status isOnline
-      user.isOnline = true;
-      await user.save();
+      await userModel.updateOne({ id }, { isOnline: true });
 
       // Response for client
-      const { id, username, totalGame, totalGameWin, totalGameLose } = user;
-      io.emit(SOCKET_TAG.RESPONSE_USER_ONLINE, {
-        user: {
-          id,
-          username,
-          totalGame,
-          totalGameWin,
-          totalGameLose,
-        },
-      });
+      io.emit(SOCKET_TAG.RESPONSE_USER_ONLINE, { user });
     });
 
     // 2
