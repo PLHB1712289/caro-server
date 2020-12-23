@@ -1,14 +1,46 @@
 const { messageModel, gameModel, roomModel } = require("../../database/schema");
 const { generateIDRoom } = require("../../util");
+const { service: serviceIO } = require("../../socket.io");
 
 const service = {
   createNewGame: async (name, player1) => {
     try {
-      const newGame = await new Game({
+      const newGame = await new gameModel({
         name,
         player1,
       }).save();
       return { success: true, message: "Success", id: newGame._id };
+    } catch (e) {
+      console.log("[ERROR]: ", e.message);
+      return { success: false, message: "Failed" };
+    }
+  },
+
+  createNewRoom: async (idUser, name, password) => {
+    try {
+      const newRoom = await new roomModel({
+        name,
+        password: password ? password : null,
+        player1: idUser,
+      }).save();
+
+      const { idRoom, gameCurrent, player1, player2 } = newRoom;
+
+      serviceIO.updateAddRoomOnline({
+        no: 0,
+        id: idRoom,
+        name,
+        status: !gameCurrent ? "waiting" : "playing",
+        isLock: password ? true : false,
+        player1,
+        player2,
+      });
+
+      return {
+        success: true,
+        message: "Create new room success",
+        data: { id: idRoom },
+      };
     } catch (e) {
       console.log("[ERROR]: ", e.message);
       return { success: false, message: "Failed" };

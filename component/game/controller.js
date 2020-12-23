@@ -72,6 +72,17 @@ const controller = {
     const { success, message, game } = await service.getGame(idGame);
     res.send({ success, message, data: { game } });
   },
+
+  POST_createNewRoom: async (req, res) => {
+    const { id: idUser } = req.user;
+    const { name, password } = req.body;
+    const { success, message, data } = await service.createNewRoom(
+      idUser,
+      name,
+      password
+    );
+    res.send({ success, message, data });
+  },
 };
 
 module.exports = controller;

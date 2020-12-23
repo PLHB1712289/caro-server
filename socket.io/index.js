@@ -35,13 +35,16 @@ const config = (server) => {
       });
 
       // Find user on database
-      const user = await (await userModel.findOne({ id })).isSelected([
-        "id",
-        "username",
-        "totalGame",
-        "totalGameWin",
-        "totalGameLose",
-      ]);
+      const user = await userModel
+        .findOne({ id })
+        .select([
+          "-_id",
+          "id",
+          "username",
+          "totalGame",
+          "totalGameWin",
+          "totalGameLose",
+        ]);
 
       // Update status isOnline
       await userModel.updateOne({ id }, { isOnline: true });
@@ -105,9 +108,14 @@ const service = {
     });
   },
 
-  updateRoomOnline: (room) => {
-    console.log("[SOCKET]: UPDATE USER ONLINE");
-    io.emit(SOCKET_TAG.RESPONSE_ROOM_ONLINE, { room });
+  updateAddRoomOnline: (room) => {
+    console.log("[SOCKET]: UPDATE ADD ROOM ONLINE");
+    io.emit(SOCKET_TAG.RESPONSE_ADD_ROOM_ONLINE, { room });
+  },
+
+  updateRemoveRoomOnline: (room) => {
+    console.log("[SOCKET]: UPDATE REMOVE ROOM ONLINE");
+    io.emit(SOCKET_TAG.RESPONSE_REMOVE_ROOM_ONLINE, { room });
   },
 };
 
