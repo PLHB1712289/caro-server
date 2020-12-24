@@ -1,5 +1,6 @@
 const service = require("./service");
 const { getIO } = require("../../socket.io");
+const { getIDUserFromToken } = require("../../util");
 
 const controller = {
   // Tao game moi
@@ -38,13 +39,17 @@ const controller = {
 
   // Lay tin nhan
   GET_getMessage: async (req, res) => {
-    const idGame = req.query.id;
-    const idUser = req.user.id;
+    const idRoom = req.query.id;
+    const idUser = getIDUserFromToken(req.query.token);
+
+    console.log("[GET MESSAGE]");
 
     const { success, message, listMessage } = await service.getMessage({
-      idGame,
+      idRoom,
       idUser,
     });
+
+    console.log("List message:", listMessage);
 
     res.send({ success, message, data: { listMessage } });
   },
@@ -84,9 +89,10 @@ const controller = {
     res.send({ success, message, data });
   },
 
-  POST_getRoom: async (req, res) => {
-    const { id: idRoom } = req.query;
-    const idUser = req.user.id;
+  GET_getRoom: async (req, res) => {
+    const { id: idRoom, token } = req.query;
+
+    const idUser = getIDUserFromToken(token);
 
     const response = await service.getRoom(idUser, idRoom);
     res.send(response);

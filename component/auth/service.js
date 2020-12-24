@@ -184,7 +184,7 @@ const service = {
 
   activeAccount: async (id, code) => {
     try {
-      const user = await userModel.findOne({ _id: id, active: code });
+      const user = await userModel.findOne({ id: id, active: code });
 
       if (user) {
         user.active = "activated";

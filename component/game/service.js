@@ -1,3 +1,4 @@
+const { InsufficientStorage } = require("http-errors");
 const {
   messageModel,
   gameModel,
@@ -81,26 +82,59 @@ const service = {
     }
   },
 
-  getMessage: async ({ idGame, idUser }) => {
+  getMessage: async ({ idRoom, idUser }) => {
     try {
-      const listMessage = await messageModel.find({ idGame });
+      const listMessage = await messageModel.find({ idRoom });
+
+      const room = await roomModel
+        .findOne({ idRoom })
+        .select(["-_id", "player1", "player2"]);
+
+      const player1 = await userModel
+        .findOne({ id: room.player1 })
+        .select(["-_id", "id", "username"]);
+
+      const player2 = await userModel
+        .findOne({ id: room.player2 })
+        .select(["-_id", "id", "username"]);
+
+      const idUserReplace = idUser || player1.id;
 
       if (listMessage) {
         return {
           success: true,
-          message: "Send message success",
+          message: "Get message success",
+
           listMessage: listMessage.map((item) => {
-            if (idUser === item.idUser) {
+            const time = new Date(item.created_at);
+            const hours =
+              time.getHours() > 10
+                ? `${time.getHours()}`
+                : `0${time.getHours()}`;
+            const minutes =
+              time.getMinutes() > 10
+                ? `${time.getMinutes()}`
+                : `0${time.getMinutes()}`;
+
+            if (idUserReplace === item.idUser) {
               return {
                 contentMessage: item.message,
-                username: "You",
-                type: "1",
+                username:
+                  player1.id === idUserReplace
+                    ? player1.username
+                    : player2.username,
+                type: "sender",
+                time: `${hours}:${minutes}`,
               };
             } else {
               return {
                 contentMessage: item.message,
-                username: "Player 2",
-                type: "2",
+                username:
+                  player1.id === item.idUser
+                    ? player1.username
+                    : player2.username,
+                type: "receiver",
+                time: `${hours}:${minutes}`,
               };
             }
           }),
@@ -170,10 +204,20 @@ const service = {
       const room = await roomModel.findOne({ idRoom });
 
       let becomePlayer = false;
+      let isPlayer = 0;
+
       if (room.player1 !== idUser && room.player2 === null) {
         room.player2 = idUser;
         await room.save();
         becomePlayer = true;
+      }
+
+      if (room.player1 === idUser) {
+        isPlayer = 1;
+      }
+
+      if (room.player2 === idUser) {
+        isPlayer = 2;
       }
 
       if (idUser === room.player1 || idUser === room.player2) {
@@ -195,6 +239,7 @@ const service = {
         player1,
         player2,
         password: room.password,
+        isPlayer,
       };
 
       return {
