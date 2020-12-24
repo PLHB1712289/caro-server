@@ -1,5 +1,9 @@
-const { messageModel, gameModel, roomModel } = require("../../database/schema");
-const { generateIDRoom } = require("../../util");
+const {
+  messageModel,
+  gameModel,
+  roomModel,
+  userModel,
+} = require("../../database/schema");
 const { service: serviceIO } = require("../../socket.io");
 
 const service = {
@@ -24,7 +28,8 @@ const service = {
         player1: idUser,
       }).save();
 
-      const { idRoom, gameCurrent, player1, player2 } = newRoom;
+      const username = await userModel.findOne({ id: idUser });
+      const { idRoom, gameCurrent, player2 } = newRoom;
 
       serviceIO.updateAddRoomOnline({
         no: 0,
@@ -32,7 +37,7 @@ const service = {
         name,
         status: !gameCurrent ? "waiting" : "playing",
         isLock: password ? true : false,
-        player1,
+        player1: username.username,
         player2,
       });
 
@@ -115,7 +120,7 @@ const service = {
 
   getGame: async (idGame) => {
     try {
-      const game = await gameModel.findOne({ _id: idGame });
+      const game = await gameModel.findOne({ id: idGame });
       return { success: true, message: "Success", game };
     } catch (e) {
       console.log("[ERROR]: ", e.message);
@@ -156,6 +161,49 @@ const service = {
     } catch (e) {
       console.log("[ERROR]: ", e.message);
       return { success: false, message: "Failed" };
+    }
+  },
+
+  getRoom: async (idUser, idRoom) => {
+    try {
+      console.log("idRoom:", idRoom);
+      const room = await roomModel.findOne({ idRoom });
+
+      let becomePlayer = false;
+      if (room.player1 !== idUser && room.player2 === null) {
+        room.player2 = idUser;
+        await room.save();
+        becomePlayer = true;
+      }
+
+      if (idUser === room.player1 || idUser === room.player2) {
+        becomePlayer = true;
+      }
+
+      const player1 =
+        (await userModel
+          .findOne({ id: room.player1 })
+          .select(["-_id", "id", "username"])) || null;
+      const player2 =
+        (await userModel
+          .findOne({ id: room.player2 })
+          .select(["-_id", "id", "username"])) || null;
+
+      const roomResponse = {
+        becomePlayer,
+        id: idRoom,
+        player1,
+        player2,
+        password: room.password,
+      };
+
+      return {
+        success: true,
+        message: "Success",
+        data: { room: roomResponse },
+      };
+    } catch (e) {
+      return { success: false, message: "Failed", data: {} };
     }
   },
 };

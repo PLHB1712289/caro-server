@@ -1,12 +1,64 @@
 const SOCKET_TAG = require("./data");
 const socketio = require("socket.io");
 const { getIDUserFromToken } = require("../util");
-const { userModel } = require("../database/schema");
+const { userModel, roomModel } = require("../database/schema");
 const configFile = require("../config");
 
-let listUserOnline = [];
-
 let io = null;
+
+let listUserOnline = [];
+let listRoomOnline = [];
+
+const leaveRoomOnlineByID = async (id) => {
+  const newListRoom = [];
+
+  for (let i = 0; i < listRoomOnline.length; i++) {
+    listRoomOnline[i].player = listRoomOnline[i].player.filter((player) => {
+      if (player !== id) return player;
+      return null;
+    });
+
+    if (listRoomOnline[i].player.length !== 0)
+      newListRoom.push(listRoomOnline[i]);
+    else {
+      await roomModel.updateOne(
+        { idRoom: listRoomOnline[i].id },
+        { isOpen: false }
+      );
+      io.emit(SOCKET_TAG.RESPONSE_REMOVE_ROOM_ONLINE, {
+        room: { id: listRoomOnline[i].id },
+      });
+    }
+  }
+
+  listRoomOnline = newListRoom;
+};
+
+const joinRoomOnlineByIdSocketAndRoom = (idRoom, idSocket) => {
+  for (let i = 0; i < listRoomOnline.length; i++) {
+    // update
+    if (listRoomOnline[i].id === idRoom) {
+      if (
+        listRoomOnline[i].player.filter((user) => {
+          if (user === idSocket) return user;
+          return null;
+        }).length === 0
+      )
+        listRoomOnline[i].player.push(idSocket);
+      return;
+    }
+  }
+
+  listRoomOnline.push({ id: idRoom, player: [idSocket] });
+};
+
+(() => {
+  setInterval(() => {
+    console.log("[LIST-ROOM-ONLINE]:", listRoomOnline);
+    // leaveRoomOnlineByID("1");
+    // leaveRoomOnlineByID("2");
+  }, 5000);
+})();
 
 const getIO = () => {
   return io;
@@ -72,6 +124,30 @@ const config = (server) => {
     });
 
     // 3
+    // Recieve request join room when user create new room or another user join room
+    socket.on(SOCKET_TAG.REQUEST_JOIN_ROOM, async ({ id }) => {
+      // Join room
+      socket.join(id);
+      console.log(`[SOCKET]: JOIN ROOM (ID: ${id})`);
+
+      // room = {id: 1244, player: [user1, user2]}
+      joinRoomOnlineByIdSocketAndRoom(id, socket.id);
+      // create
+      console.log("[SOCKET]: Run after command return");
+    });
+
+    // 4
+    // Recieve request join room when user leave room.
+    socket.on(SOCKET_TAG.REQUEST_LEAVE_ROOM, async ({ id }) => {
+      // Leave room
+      socket.leave(id);
+      console.log(`[SOCKET]: LEAVE ROOM (ID: ${id})`);
+
+      // room = {id: 1244, player: [user1, user2]}
+      await leaveRoomOnlineByID(socket.id);
+    });
+
+    // final
     // Handle event when user disconnect, update list user online
     socket.on("disconnect", async () => {
       // Log
@@ -91,6 +167,10 @@ const config = (server) => {
         // Response for client
         io.emit(SOCKET_TAG.RESPONSE_USER_OFFLINE, { user: { id: idUser } });
       }
+
+      // leave room
+      // room = {id: 1244, player: [user1, user2]}
+      await leaveRoomOnlineByID(socket.id);
     });
   });
 

@@ -30,12 +30,6 @@ const service = {
   },
   getListRoomOnline: async () => {
     try {
-      // await new roomModel({
-      //   name: "baobao",
-      //   player1: "bao",
-      //   player2: "hoai",
-      // }).save();
-
       const listRoom = await roomModel
         .find({ isOpen: true })
         .select([
@@ -49,30 +43,31 @@ const service = {
         ])
         .sort("field: -created_at");
 
+      const listRoomUsername = [];
+      for (let i = 0; i < listRoom.length; i++) {
+        const player1 = (await userModel
+          .findOne({ id: listRoom[i].player1 })
+          .select(["username"])) || { username: null };
+
+        const player2 = (await userModel
+          .findOne({ id: listRoom[i].player2 })
+          .select(["username"])) || { username: null };
+
+        listRoomUsername.push({
+          no: i + 1,
+          id: listRoom[i].idRoom,
+          name: listRoom[i].name,
+          status: !listRoom[i].gameCurrent ? "waiting" : "playing",
+          isLock: listRoom[i].password ? true : false,
+          player1: player1.username,
+          player2: player2.username,
+        });
+      }
+
       return {
         success: true,
         message: "Get list room success",
-        data: {
-          listRoom: listRoom.map((item, index) => {
-            const {
-              idRoom: id,
-              name,
-              gameCurrent,
-              password,
-              player1,
-              player2,
-            } = item;
-            return {
-              no: index + 1,
-              id,
-              name,
-              status: !gameCurrent ? "waiting" : "playing",
-              isLock: password ? true : false,
-              player1,
-              player2,
-            };
-          }),
-        },
+        data: { listRoom: listRoomUsername },
       };
     } catch (e) {
       console.log(`[ERROR]: ${e.message}`);

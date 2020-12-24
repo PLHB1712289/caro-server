@@ -83,6 +83,14 @@ const controller = {
     );
     res.send({ success, message, data });
   },
+
+  POST_getRoom: async (req, res) => {
+    const { id: idRoom } = req.query;
+    const idUser = req.user.id;
+
+    const response = await service.getRoom(idUser, idRoom);
+    res.send(response);
+  },
 };
 
 module.exports = controller;

@@ -4,6 +4,7 @@ const router = require("express").Router();
 const controller = require("./controller");
 
 router.post("/new-room", checkAuthorization(), controller.POST_createNewRoom);
+router.get("/room", checkAuthorization(), controller.POST_getRoom);
 
 router.get("/:id", checkAuthorization(), controller.GET_getGame);
 router.put("/:id", checkAuthorization(), controller.POST_makeAMove);
