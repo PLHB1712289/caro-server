@@ -55,6 +55,29 @@ const controller = {
 
     res.send(message);
   },
+  GET_user:async(req,res)=>{
+    const userId =req.user.id;
+    console.log("This is user id ",req.user.id);
+    const {success,message,data}=await service.getUser(userId);
+    res.send({success,message,data});
+  },
+  POST_changePassword:async(req,res)=>{
+    console.log("Chui vao day roi ne, change password");
+    const userId=req.user.id;
+    const {oldPassword,newPassword}=req.body;
+    console.log("userid,old,new:",userId,oldPassword,newPassword);
+    const {success,message,data}=await service.changePassword(userId,oldPassword,newPassword); 
+    res.send({success,message,data});
+  },
+  POST_forgotPassword:async(req,res)=>{
+    console.log("Controller check req.body:",req.body);
+    const {email}=req.body;
+    console.log("Controller mail:",email);
+    const {success,message,data}=await service.forgotPassword(email); 
+    res.send({success,message,data});
+  },
+
+
 };
 
 module.exports = controller;

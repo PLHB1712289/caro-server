@@ -12,7 +12,16 @@ const createMail = {
     Thank you,
     Car0 team`;
   },
-  mailResetPassword: () => {},
+  mailResetPassword: (username,newPassword) => {
+    console.log("Vao duoc trong day");
+    return `
+    Hi ${username},
+    
+    Thanks for using our service, your new password is ${newPassword}.
+    
+    Thank you,
+    Car0 team`;
+  },
 };
 
 // config mailer
@@ -25,6 +34,9 @@ const transporter = nodemailer.createTransport({
     user: config.MAIL_ADDRESS,
     pass: config.MAIL_PASSWORD,
   },
+  tls: {
+          rejectUnauthorized: false
+      }
 });
 
 // create mail Option
@@ -35,6 +47,12 @@ const mailActive = (mailAddress, username, idUser, codeActive) => ({
   text: createMail.mailActive(username, idUser, codeActive),
 });
 
+const mailResetPass = (mailAddress,username,newPassword) => ({
+  from: config.MAIL_ADDRESS,
+  to: mailAddress,
+  subject: "Reset password",
+  text: createMail.mailResetPassword(username, newPassword),
+});
 const sendMail = async (mailOptions) => {
   console.log("SEND MAIL");
   // send mail
@@ -54,4 +72,7 @@ module.exports = {
   sendMailActive: (mailAddress, username, idUser, codeActive) => {
     sendMail(mailActive(mailAddress, username, idUser, codeActive));
   },
+  sendMailResetPassword:(mailAddress,username,newPassword)=>{
+    sendMail(mailResetPass(mailAddress,username,newPassword));
+  }
 };

@@ -62,6 +62,9 @@ const service = {
     try {
       // get in4 user on FB
       const response = await axiosClient.post(url, query);
+
+
+      console.log("Response in auth facebook ",response);
       const { email, name } = response;
 
       // check user in DB
@@ -74,6 +77,7 @@ const service = {
           username: generateUsername(name),
         }).save();
       }
+      console.log("User : ", user);
 
       // create payload to sign with JWT
       const payload = {
@@ -166,12 +170,12 @@ const service = {
         }).save();
 
         // send mail active
-        sendMail.sendMailActive(email, username, user._id, codeActive);
+        sendMail.sendMailActive(email, username, user.id, codeActive);
 
         return {
           success: true,
           message:
-            "Sign in success, please check mail to activate your account",
+            "Sign up success, please check mail to activate your account",
         };
       }
 
@@ -185,6 +189,8 @@ const service = {
   activeAccount: async (id, code) => {
     try {
       const user = await userModel.findOne({ id: id, active: code });
+
+      console.log("USER:", user)
 
       if (user) {
         user.active = "activated";
@@ -200,6 +206,74 @@ const service = {
       return { success: false, message: "Cannot connect to database." };
     }
   },
+  getUser:async(id)=>{
+    let user = await userModel.findOne({ id });
+    return {success:true,message:"Success",data:user};
+
+  },
+  changePassword:async(userId,oldPassword,newPassword)=>{
+    try {
+      let user = await userModel.findOne({ id: userId });
+
+      console.log("USER:", user)
+
+      if (user) {
+        if (!bcrypt.compareSync(oldPassword, user.password)) {
+          return { success: false, message: "Incorrect old password", data: null };
+        }
+        console.log("New password :",newPassword);
+        const hashPassword = bcrypt.hashSync(newPassword, config.SECRET_KEY_HASH);
+        user.password = hashPassword;
+        await user.save();
+        console.log("New password after hash :",user.password);
+
+        return {
+          success: true,
+          message: 'Change password success.',
+          data:user
+        };
+      }
+
+      return { success: false, message: "Change password not success.",data:null };
+    } catch (e) {
+      return { success: false, message: "Cannot connect to database.",data:null };
+    }
+    
+  },
+  forgotPassword:async(email)=>{
+    try {
+      console.log("Mail:",email);
+      let user = await userModel.findOne({ email: email });
+
+      console.log("USER:", user)
+      if(!user)
+      {
+        return{
+          success:false,
+          message:'Cannot find user with that mail',
+          data:null
+        }
+      }
+      if (user) {
+        const newPassword = generateGUID();
+        console.log("New password:",newPassword);
+        const hashPassword = bcrypt.hashSync(newPassword, config.SECRET_KEY_HASH);
+        user.password = hashPassword;
+        await user.save();
+        sendMail.sendMailResetPassword(email,user.username,newPassword);
+        return {
+          success: true,
+          message: 'Go to gmail to receive new password.',
+          data:user
+        };
+      }
+
+      return { success: false, message: "Reset password not success.",data:null };
+    } catch (e) {
+      return { success: false, message: "Cannot connect to database.",data:null };
+    }
+    
+  }
 };
 
 // console.log(createMail.mailActive("1234"));

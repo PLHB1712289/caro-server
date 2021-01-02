@@ -20,9 +20,9 @@ const DEVELOPMENT_ENVIRONMENT = {
   URL_SERVER: "http://localhost:3000",
   SECRET_KEY_JWT: "scretkey",
   SECRET_KEY_HASH: 10,
-  // MONGO_DB_URL:
-  //   "mongodb+srv://car0:car0@cluster0.q9kh1.mongodb.net/car0?retryWrites=true&w=majority",
-  MONGO_DB_URL: "mongodb://localhost/car0",
+  MONGO_DB_URL:
+  "mongodb+srv://car0:car0@cluster0.q9kh1.mongodb.net/car0?retryWrites=true&w=majority",
+  //MONGO_DB_URL: "mongodb://localhost/car0",
   MAIL_ADDRESS: "car00.game.xo@gmail.com",
   MAIL_PASSWORD: "c@r01234",
 };
