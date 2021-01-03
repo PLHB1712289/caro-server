@@ -1,63 +1,47 @@
 const SOCKET_TAG = require("./data");
 const socketio = require("socket.io");
 const { getIDUserFromToken } = require("../util");
-const { userModel, roomModel, messageModel } = require("../database/schema");
+const { gameModel } = require("../database/schema");
 const configFile = require("../config");
+
+const controllerRoom = require("./controllerRoom");
+const controllerUser = require("./controllerUser");
+const ControllerGame = require("./controllerGame");
+const ControllerMessage = require("./controllerMessage");
+
+const controllerSocket = require("./controllerSocket");
 
 let io = null;
 
-let listUserOnline = [];
-let listRoomOnline = [];
-
-const leaveRoomOnlineByID = async (id) => {
-  const newListRoom = [];
-
-  for (let i = 0; i < listRoomOnline.length; i++) {
-    listRoomOnline[i].player = listRoomOnline[i].player.filter((player) => {
-      if (player !== id) return player;
-      return null;
+const timeCounter = async (
+  idRoom,
+  idGame,
+  idPlayer1,
+  idPlayer2,
+  player,
+  timmerPlayer1,
+  timmerPlayer2
+) => {
+  while (timmerPlayer1 >= 0 && timmerPlayer2 >= 0) {
+    io.to(idRoom).emit(SOCKET_TAG.RESPONSE_TIMMER, {
+      time: { timePlayer1: timmerPlayer1, timePlayer2: timmerPlayer2 },
     });
 
-    if (listRoomOnline[i].player.length !== 0)
-      newListRoom.push(listRoomOnline[i]);
-    else {
-      await roomModel.updateOne(
-        { idRoom: listRoomOnline[i].id },
-        { isOpen: false }
-      );
-      io.emit(SOCKET_TAG.RESPONSE_REMOVE_ROOM_ONLINE, {
-        room: { id: listRoomOnline[i].id },
-      });
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    if (player === idPlayer1) {
+      timmerPlayer1--;
+    } else {
+      timmerPlayer2--;
     }
   }
 
-  listRoomOnline = newListRoom;
+  const playerTimeUp = timmerPlayer1 < 0 ? "player1" : "player2";
+
+  io.to(idRoom).emit(SOCKET_TAG.RESPONSE_TIME_UP, {
+    player: playerTimeUp,
+  });
 };
-
-const joinRoomOnlineByIdSocketAndRoom = (idRoom, idSocket) => {
-  for (let i = 0; i < listRoomOnline.length; i++) {
-    // update
-    if (listRoomOnline[i].id === idRoom) {
-      if (
-        listRoomOnline[i].player.filter((user) => {
-          if (user === idSocket) return user;
-          return null;
-        }).length === 0
-      )
-        listRoomOnline[i].player.push(idSocket);
-      return;
-    }
-  }
-
-  listRoomOnline.push({ id: idRoom, player: [idSocket] });
-};
-
-// LOG listRoom online
-// (() => {
-//   setInterval(() => {
-//     console.log("[LIST-ROOM-ONLINE]:", listRoomOnline);
-//   }, 5000);
-// })();
 
 const getIO = () => {
   return io;
@@ -70,7 +54,12 @@ const config = (server) => {
     origins: [`${configFile.URL_SERVER}:${process.env.PORT}`],
   });
 
+  controllerUser.setIO(io);
+  controllerRoom.setIO(io);
+  const controllerMessage = new ControllerMessage(io);
+
   io.on("connection", (socket) => {
+    controllerSocket.push(socket);
     // Log
     console.log(`[SOCKET]: new connection ${socket.id}`);
 
@@ -78,31 +67,8 @@ const config = (server) => {
     // Receive request update user online when user connect (user logged in before ~ user already have a token)
     socket.on(SOCKET_TAG.REQUEST_USER_ONLINE, async ({ token }) => {
       // Parse user' id from token
-      const id = getIDUserFromToken(token);
-
-      // Push user into listUserOnline
-      listUserOnline.push({
-        idSocket: socket.id,
-        idUser: id,
-      });
-
-      // Find user on database
-      const user = await userModel
-        .findOne({ id })
-        .select([
-          "-_id",
-          "id",
-          "username",
-          "totalGame",
-          "totalGameWin",
-          "totalGameLose",
-        ]);
-
-      // Update status isOnline
-      await userModel.updateOne({ id }, { isOnline: true });
-
-      // Response for client
-      io.emit(SOCKET_TAG.RESPONSE_USER_ONLINE, { user });
+      const userID = getIDUserFromToken(token);
+      await controllerUser.userOnline(userID, socket.id);
     });
     // ---</1>---
 
@@ -110,18 +76,8 @@ const config = (server) => {
     // Receive request update list user when another user sign out
     socket.on(SOCKET_TAG.REQUEST_USER_OFFLINE, async ({ token }) => {
       // Parse user's id from token
-      const idUser = getIDUserFromToken(token);
-
-      // Remove user in listUserOnline
-      listUserOnline = listUserOnline.filter((item) => {
-        if (item.idSocket !== socket.id) return item;
-      });
-
-      // Update status isOnline
-      await userModel.updateOne({ id: idUser }, { isOnline: false });
-
-      // Response for another client
-      io.emit(SOCKET_TAG.RESPONSE_USER_OFFLINE, { user: { id: idUser } });
+      const userID = getIDUserFromToken(token);
+      await controllerUser.userOffline(userID, socket.id);
     });
     // ---</2>---
 
@@ -131,11 +87,7 @@ const config = (server) => {
       // Join room
       socket.join(id);
       console.log(`[SOCKET]: JOIN ROOM (ID: ${id})`);
-
-      // room = {id: 1244, player: [user1, user2]}
-      joinRoomOnlineByIdSocketAndRoom(id, socket.id);
-      // create
-      console.log("[SOCKET]: Run after command return");
+      controllerRoom.joinRoom(id, socket.id);
     });
     // ---<3>---
 
@@ -144,10 +96,7 @@ const config = (server) => {
     socket.on(SOCKET_TAG.REQUEST_LEAVE_ROOM, async ({ id }) => {
       // Leave room
       socket.leave(id);
-      console.log(`[SOCKET]: LEAVE ROOM (ID: ${id})`);
-
-      // room = {id: 1244, player: [user1, user2]}
-      await leaveRoomOnlineByID(socket.id);
+      await controllerRoom.leaveRoom(socket.id);
     });
     // ---<4>---
 
@@ -156,42 +105,7 @@ const config = (server) => {
     socket.on(
       SOCKET_TAG.REQUEST_SEND_MESS,
       async ({ idRoom, message, token }) => {
-        const idUser = await getIDUserFromToken(token);
-        const user = await userModel.findOne({ id: idUser }).select("username");
-        const room = await roomModel.findOne({ idRoom });
-
-        if (room.player1 === idUser || room.player2 === idUser) {
-          const newMess = await messageModel({
-            idUser,
-            idRoom,
-            message,
-          }).save();
-          const time = new Date(newMess.created_at);
-          const hours =
-            time.getHours() > 10 ? `${time.getHours()}` : `0${time.getHours()}`;
-          const minutes =
-            time.getMinutes() > 10
-              ? `${time.getMinutes()}`
-              : `0${time.getMinutes()}`;
-
-          socket.to(idRoom).emit(SOCKET_TAG.RESPONSE_SEND_MESS, {
-            message: {
-              contentMessage: message,
-              type: "receiver",
-              username: user.username,
-              time: `${hours}:${minutes}`,
-            },
-          });
-
-          io.to(`${socket.id}`).emit(SOCKET_TAG.RESPONSE_SEND_MESS, {
-            message: {
-              contentMessage: message,
-              type: "sender",
-              username: user.username,
-              time: `${hours}:${minutes}`,
-            },
-          });
-        }
+        await controllerMessage.sendMessage({ socket, idRoom, message, token });
       }
     );
     // ---</5>---
@@ -200,49 +114,43 @@ const config = (server) => {
     // Receive request update in4 user when another user become a player
     socket.on(
       SOCKET_TAG.REQUEST_UPDATE_USER_IN_ROOM,
-      ({ idRoom, idPlayer, idUser, username }) => {
+      ({ idRoom, player1, player2 }) => {
         socket.to(idRoom).emit(SOCKET_TAG.RESPONSE_UPDATE_USER_IN_ROOM, {
           idRoom,
-          idPlayer,
-          idUser,
-          username,
+          player1,
+          player2,
         });
 
         io.emit(SOCKET_TAG.RESPONSE_UPDATE_USER_IN_LISTROOM, {
           idRoom,
-          idPlayer,
-          idUser,
-          username,
+          player1,
+          player2,
         });
       }
     );
     // ---</6>---
 
-    // ---<5>---
+    // ---<7>---
+    // Receive request update in4 user when another user become a player
+    socket.on(SOCKET_TAG.REQUEST_NEW_GAME, async ({ idRoom }) => {
+      controllerRoom.newGame(idRoom);
+    });
+    // ---</7>---
+
+    // ---<8>---
     // Handle event when user disconnect, update list user online
     socket.on("disconnect", async () => {
       // Log
       console.log(`[SOCKET]: disconnect ${socket.id}`);
 
-      // Get user from listUserOnline
-      let idUser = null;
-      listUserOnline = listUserOnline.filter((item) => {
-        if (item.idSocket !== socket.id) return item;
-        else idUser = item.idUser;
-      });
-
-      // Update status isOnline
-      if (idUser) {
-        await userModel.updateOne({ id: idUser }, { isOnline: false });
-
-        // Response for client
-        io.emit(SOCKET_TAG.RESPONSE_USER_OFFLINE, { user: { id: idUser } });
-      }
-
+      // disconnect
+      await controllerUser.userDisconnect(socket.id);
       // leave room
-      await leaveRoomOnlineByID(socket.id);
+      await controllerRoom.leaveRoom(socket.id);
+      // remove socket
+      controllerSocket.remove(socket.id);
     });
-    // ---<5>---
+    // ---<8>---
   });
 
   console.log("Config socket.io success");

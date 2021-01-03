@@ -200,28 +200,18 @@ const service = {
 
   getRoom: async (idUser, idRoom) => {
     try {
-      console.log("idRoom:", idRoom);
       const room = await roomModel.findOne({ idRoom });
 
       let becomePlayer = false;
-      let isPlayer = 0;
 
-      if (room.player1 !== idUser && room.player2 === null) {
-        room.player2 = idUser;
-        await room.save();
-        becomePlayer = true;
-      }
-
-      if (room.player1 === idUser) {
-        isPlayer = 1;
-      }
-
-      if (room.player2 === idUser) {
-        isPlayer = 2;
-      }
-
-      if (idUser === room.player1 || idUser === room.player2) {
-        becomePlayer = true;
+      if (idUser) {
+        if (room.player1 !== idUser && room.player2 === null) {
+          room.player2 = idUser;
+          await room.save();
+          becomePlayer = true;
+        } else if (idUser === room.player1 || idUser === room.player2) {
+          becomePlayer = true;
+        }
       }
 
       const player1 =
@@ -239,7 +229,17 @@ const service = {
         player1,
         player2,
         password: room.password,
-        isPlayer,
+        role: idUser
+          ? idUser === room.player1
+            ? "admin"
+            : "player"
+          : "viewer",
+        status:
+          room.gameCurrent !== null
+            ? "playing"
+            : room.player2 !== null
+            ? "ready"
+            : "waiting",
       };
 
       return {

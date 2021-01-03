@@ -166,7 +166,7 @@ const service = {
         }).save();
 
         // send mail active
-        sendMail.sendMailActive(email, username, user._id, codeActive);
+        sendMail.sendMailActive(email, username, user.id, codeActive);
 
         return {
           success: true,
@@ -183,8 +183,11 @@ const service = {
   },
 
   activeAccount: async (id, code) => {
+    console.log("code", code);
     try {
       const user = await userModel.findOne({ id: id, active: code });
+
+      console.log(user);
 
       if (user) {
         user.active = "activated";

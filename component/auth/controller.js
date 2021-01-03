@@ -25,8 +25,6 @@ const controller = {
   POST_signInWithGG: async (req, res) => {
     const { id, accessToken } = req.body;
 
-    console.log(req.body);
-
     const { success, message, token } = await service.signInWithGG(
       id,
       accessToken
