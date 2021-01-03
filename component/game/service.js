@@ -4,6 +4,7 @@ const {
   gameModel,
   roomModel,
   userModel,
+  moveModel,
 } = require("../../database/schema");
 const { service: serviceIO } = require("../../socket.io");
 
@@ -199,6 +200,7 @@ const service = {
   },
 
   getRoom: async (idUser, idRoom) => {
+    console.log("GET ROOM");
     try {
       const room = await roomModel.findOne({ idRoom });
 
@@ -223,6 +225,17 @@ const service = {
           .findOne({ id: room.player2 })
           .select(["-_id", "id", "username"])) || null;
 
+      let history = [];
+      console.log("ROOM:", room);
+      if (room.gameCurrent !== null) {
+        history = await moveModel
+          .find({ idGame: room.gameCurrent })
+          .sort({ sort: 1 })
+          .select("-_id board order index");
+
+        console.log("GET HISTORY SUCCESS");
+      }
+
       const roomResponse = {
         becomePlayer,
         id: idRoom,
@@ -240,6 +253,7 @@ const service = {
             : room.player2 !== null
             ? "ready"
             : "waiting",
+        history,
       };
 
       return {

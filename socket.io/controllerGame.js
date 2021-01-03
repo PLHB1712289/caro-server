@@ -1,4 +1,9 @@
-const { gameModel } = require("../database/schema");
+const {
+  gameModel,
+  userModel,
+  moveModel,
+  roomModel,
+} = require("../database/schema");
 const controllerSocket = require("./controllerSocket");
 const controllerUser = require("./controllerUser");
 const SOCKET_TAG = require("./data");
@@ -33,7 +38,7 @@ const ControllerGame = class {
     this.time = LIMIT_TIME;
   }
 
-  handleMove(index) {
+  async handleMove(index) {
     clearInterval(this.timmerInterval);
     clearInterval(this.updateTimeInterval);
 
@@ -42,8 +47,21 @@ const ControllerGame = class {
 
     this.board[index] = this.orderTurn % 2 === 0 ? "X" : "O";
 
+    this.io.to(this.idRoom).emit(SOCKET_TAG.RESPONSE_MOVE, {
+      board: this.board,
+      index,
+      order: this.order,
+    });
+
+    new moveModel({
+      idRoom: this.idRoom,
+      idGame: this.idGame,
+      board: this.board,
+      order: this.orderTurn,
+      index,
+    }).save();
+
     if (this.checkDraw().gameover === true) {
-      console.log("DRAW");
       this.stopGame();
       return;
     }
@@ -51,9 +69,22 @@ const ControllerGame = class {
     const { gameover, winner } = this.checkWin(index);
 
     if (gameover) {
-      console.log("WIN");
       this.io.to(this.idRoom).emit(SOCKET_TAG.RESPONSE_WINNER, { winner });
       this.stopGame();
+
+      const player1 = await userModel.findOne({ id: this.idPlayer1 });
+      const player2 = await userModel.findOne({ id: this.idPlayer2 });
+
+      if (winner === this.player1) {
+        player1.totalGameWin = player1.totalGameWin + 1;
+        player2.totalGameLose = player2.totalGameLose + 1;
+      } else {
+        player1.totalGameLose = player1.totalGameLose + 1;
+        player2.totalGameWin = player2.totalGameWin + 1;
+      }
+
+      player1.save();
+      player2.save();
       return;
     }
 
@@ -66,12 +97,6 @@ const ControllerGame = class {
     this.io
       .to(this.idRoom)
       .emit(SOCKET_TAG.RESPONSE_TIMMER, { time: LIMIT_TIME });
-
-    this.io.to(this.idRoom).emit(SOCKET_TAG.RESPONSE_MOVE, {
-      index,
-      board: this.board,
-      isPlayerX: playerNextTurn === this.playerO ? true : false,
-    });
 
     this.io
       .to(this.idRoom)
@@ -91,6 +116,10 @@ const ControllerGame = class {
     });
     newGame.save();
     this.idGame = newGame._id;
+    this.orderTurn = 0;
+    const roomDB = await roomModel.findOne({ idRoom: this.idRoom });
+    roomDB.gameCurrent = this.idGame;
+    roomDB.save();
 
     const oldGame = await gameModel
       .find({ idRoom: this.idRoom, status: false })
@@ -133,6 +162,15 @@ const ControllerGame = class {
       ({ index }) => this.handleMove(index)
     );
 
+    const player1 = await userModel.findOne({ id: this.idPlayer1 });
+    const player2 = await userModel.findOne({ id: this.idPlayer2 });
+
+    player1.totalGame = player1.totalGame + 1;
+    player2.totalGame = player2.totalGame + 1;
+
+    player1.save();
+    player2.save();
+
     return newGame._id;
   }
 
@@ -142,6 +180,10 @@ const ControllerGame = class {
     const game = await gameModel.findOne({ _id: this.idGame });
     game.status = false;
     game.save();
+
+    const roomDB = await roomModel.findOne({ idRoom: this.idRoom });
+    roomDB.gameCurrent = null;
+    roomDB.save();
 
     controllerSocket.removeListener(
       controllerUser.getSocketID(this.idPlayer1),
@@ -193,13 +235,10 @@ const ControllerGame = class {
 
     let count = 1;
 
-    console.log("index =", index);
-
     for (let k = 0; k < dx.length; k++) {
       let currX = index % size; //colums
       let currY = ~~(index / size); //rows
 
-      console.log(`(row,col) = (${currY},${currX})`);
       //update count
       if (k % 2 === 0) {
         count = 1;
@@ -249,6 +288,20 @@ const ControllerGame = class {
       const game = await gameModel.findOne({ _id: this.idGame });
       game.winner = winner;
       game.save();
+
+      const player1 = await userModel.findOne({ id: this.idPlayer1 });
+      const player2 = await userModel.findOne({ id: this.idPlayer2 });
+
+      if (winner === this.player1) {
+        player1.totalGameWin = player1.totalGameWin + 1;
+        player2.totalGameLose = player2.totalGameLose + 1;
+      } else {
+        player1.totalGameLose = player1.totalGameLose + 1;
+        player2.totalGameWin = player2.totalGameWin + 1;
+      }
+
+      player1.save();
+      player2.save();
     }
 
     this.stopGame();
