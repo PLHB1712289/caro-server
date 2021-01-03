@@ -3,7 +3,7 @@ const generateUsername = (username) => {
     username
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
-      .replaceAll(" ", "")
+      .replace(/ /g,'')
       .toLowerCase() +
     "_xxxx".replace(/[xy]/g, function (c) {
       var r = (Math.random() * 16) | 0,
