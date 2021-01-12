@@ -52,10 +52,11 @@ const service = {
     }
   },
   signInWithFB: async (id, accessToken) => {
+    console.log("User id in signin fb:",id);
     const url = `https://graph.facebook.com/${id}`;
 
     const query = {
-      fields: "email,name",
+      fields: "email,name,picture",
       access_token: `${accessToken}`,
     };
 
@@ -64,7 +65,7 @@ const service = {
       const response = await axiosClient.post(url, query);
 
       console.log("Response in auth facebook ", response);
-      const { email, name } = response;
+      const { email, name,picture } = response;
 
       // check user in DB
       let user = await userModel.findOne({ email });
@@ -73,6 +74,8 @@ const service = {
       if (!user) {
         user = await new userModel({
           email,
+          avatarUrl:picture.data.url,
+          fullname:name,
           username: generateUsername(name),
         }).save();
       }
@@ -107,14 +110,16 @@ const service = {
     try {
       // get in4 user on FB
       const response = await axiosClient.post(url, query);
-      const { email, name } = response;
-
+      const { email, name,picture } = response;
+      console.log("User gg:",response);
       // check user in DB
       let user = await userModel.findOne({ email });
 
       // create new user if not exist
       if (!user) {
         user = await new userModel({
+          avatarUrl:picture,
+          fullname: name,
           email,
           username: generateUsername(name),
         }).save();
@@ -284,6 +289,43 @@ const service = {
       return {
         success: false,
         message: "Reset password not success.",
+        data: null,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Cannot connect to database.",
+        data: null,
+      };
+    }
+  },
+
+  updateUser: async (userId,avatarUrl,fullname) => {
+    try {
+      let user = await userModel.findOne({ id:userId });
+      console.log("Check user:",user);
+      if (!user) {
+        return {
+          success: false,
+          message: "Cannot find user",
+          data: null,
+        };
+      }
+      if (user) {        
+        user.avatarUrl=avatarUrl;
+        user.fullname=fullname;
+        await user.save();
+        console.log("Check user after update:",user);
+        return {
+          success: true,
+          message: "Update profile successfully.",
+          data: user,
+        };
+      }
+
+      return {
+        success: false,
+        message: "Cannot update profile.",
         data: null,
       };
     } catch (e) {

@@ -17,7 +17,7 @@ const createMail = {
     return `
     Hi ${username},
     
-    Thanks for using our service, your new password is ${newPassword}.
+    Thanks for using our service, your new password is ${newPassword}
     
     Thank you,
     Car0 team`;
