@@ -5,7 +5,7 @@ module.exports = mongoose.model(
   "room",
   new mongoose.Schema({
     idRoom: { type: String, default: generateIDRoom },
-    name: { type: String, default: "Default room" },
+    name: { type: String, default: "Room Caro" },
     gameCurrent: { type: String, default: null },
     password: { type: String, default: null },
     player1: String,

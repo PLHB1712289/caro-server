@@ -1,11 +1,12 @@
 const SOCKET_TAG = require("./data");
 const socketio = require("socket.io");
 const { getIDUserFromToken } = require("../util");
-const { gameModel } = require("../database/schema");
+const { gameModel, userModel, roomModel } = require("../database/schema");
 const configFile = require("../config");
 
 const controllerRoom = require("./controllerRoom");
 const controllerUser = require("./controllerUser");
+const controllerQuickPlayer = require("./controllerQuickPlayer");
 const ControllerGame = require("./controllerGame");
 const ControllerMessage = require("./controllerMessage");
 
@@ -138,6 +139,142 @@ const config = (server) => {
     // ---</7>---
 
     // ---<8>---
+    // Receive request quick play
+    socket.on(SOCKET_TAG.REQUEST_QUICK_PLAY, async () => {
+      controllerQuickPlayer.push(socket.id);
+      console.log("Size:", controllerQuickPlayer.getSize());
+
+      if (controllerQuickPlayer.getSize() >= 2) {
+        // Pop player
+        const player1 = controllerQuickPlayer.pop();
+        const player2 = controllerQuickPlayer.pop();
+
+        //
+        const newRoom = await new roomModel({
+          player1: controllerUser.getUserID(player1),
+        }).save();
+
+        console.log("ROOM:", newRoom);
+
+        // controllerSocket.get(player1).join(newRoom.id);
+        // controllerSocket.get(player2).join(newRoom.id);
+
+        // console.log(`[SOCKET]: JOIN ROOM (ID: ${id})`);
+        // controllerRoom.joinRoom(id, socket.id);
+
+        // Get info player
+        const userNamePlayer1 = await userModel
+          .findOne({ id: controllerUser.getUserID(player1) })
+          .select("-_id username id totalGame totalGameWin totalGameLose");
+
+        const userNamePlayer2 = await userModel
+          .findOne({ id: controllerUser.getUserID(player2) })
+          .select("-_id username id totalGame totalGameWin totalGameLose");
+
+        // Caculate rate
+        const ratePlayer1 = {
+          win: Math.floor(
+            userNamePlayer1.totalGame !== 0
+              ? (userNamePlayer1.totalGameWin / userNamePlayer1.totalGame) * 100
+              : 0,
+            0
+          ),
+          lose: Math.floor(
+            userNamePlayer1.totalGame !== 0
+              ? (userNamePlayer1.totalGameLose / userNamePlayer1.totalGame) *
+                  100
+              : 0,
+            0
+          ),
+          draw: Math.floor(
+            userNamePlayer1.totalGame !== 0
+              ? ((userNamePlayer1.totalGame -
+                  userNamePlayer1.totalGameWin -
+                  userNamePlayer1.totalGameLose) /
+                  userNamePlayer1.totalGame) *
+                  100
+              : 0,
+            0
+          ),
+        };
+
+        const ratePlayer2 = {
+          win: Math.floor(
+            userNamePlayer2.totalGame !== 0
+              ? (userNamePlayer2.totalGameWin / userNamePlayer2.totalGame) * 100
+              : 0,
+            0
+          ),
+          lose: Math.floor(
+            userNamePlayer2.totalGame !== 0
+              ? (userNamePlayer2.totalGameLose / userNamePlayer2.totalGame) *
+                  100
+              : 0,
+            0
+          ),
+          draw: Math.floor(
+            userNamePlayer2.totalGame !== 0
+              ? ((userNamePlayer2.totalGame -
+                  userNamePlayer2.totalGameWin -
+                  userNamePlayer2.totalGameLose) /
+                  userNamePlayer2.totalGame) *
+                  100
+              : 0,
+            0
+          ),
+        };
+
+        // Response info
+        io.to(player1).emit(SOCKET_TAG.RESPONSE_QUICK_PLAY, {
+          player: userNamePlayer2.username,
+          radar: {
+            player: ratePlayer2,
+            you: ratePlayer1,
+          },
+          idRoom: newRoom.idRoom,
+          playerAdmin: userNamePlayer1.id,
+        });
+
+        io.to(player2).emit(SOCKET_TAG.RESPONSE_QUICK_PLAY, {
+          player: userNamePlayer1.username,
+          radar: {
+            player: ratePlayer1,
+            you: ratePlayer2,
+          },
+          idRoom: newRoom.idRoom,
+          playerAdmin: userNamePlayer1.id,
+        });
+
+        // Ready to join room
+        let timmer = 5;
+        const intervalReady = setInterval(() => {
+          timmer--;
+
+          io.to(player1)
+            .to(player2)
+            .emit(SOCKET_TAG.RESPONSE_READY_TO_QUICK_PLAY, {
+              timmer,
+            });
+
+          if (timmer === 0) {
+            clearInterval(intervalReady);
+            return;
+          }
+        }, 1000);
+        // Pop and join room
+      }
+    });
+    // ---</8>---
+
+    // ---<9>---
+    // Receive request update in4 user when another user become a player
+    socket.on(SOCKET_TAG.REQUEST_CANCEL_QUICK_PLAY, () => {
+      controllerQuickPlayer.remove(socket.id);
+      console.log("SIZE:", controllerQuickPlayer.getSize());
+    });
+    // ---</9>---
+
+    // ---<10>---
     // Handle event when user disconnect, update list user online
     socket.on("disconnect", async () => {
       // Log
@@ -150,7 +287,7 @@ const config = (server) => {
       // remove socket
       controllerSocket.remove(socket.id);
     });
-    // ---<8>---
+    // ---<10>---
   });
 
   console.log("Config socket.io success");
