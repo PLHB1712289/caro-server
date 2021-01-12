@@ -74,7 +74,13 @@ const controller = {
     const {success,message,data}=await service.forgotPassword(email); 
     res.send({success,message,data});
   },
-
+  POST_updateUser:async(req,res)=>{
+    const {avatarUrl,fullname}=req.body;
+    const userId=req.user.id;
+    console.log("Check userid:",userId);
+    const {success,message,data}=await service.updateUser(userId,avatarUrl,fullname); 
+    res.send({success,message,data});
+  },
 
 };
 

@@ -10,6 +10,8 @@ router.post("/sign-up", controller.POST_signUp);
 
 router.get("/active", controller.GET_active);
 router.get("/profile",checkAuthorization(), controller.GET_user);
+router.post("/update",checkAuthorization(), controller.POST_updateUser);
+
 router.post("/change-password",checkAuthorization(),controller.POST_changePassword);
 router.post("/forgot-password",controller.POST_forgotPassword);
 module.exports = router;
