@@ -119,7 +119,12 @@ const ControllerRoom = class {
             .to(this.listRoomOnline[i].socketIDPlayer1)
             .to(this.listRoomOnline[i].socketIDPlayer2)
             .emit(SOCKET_TAG.RESPONSE_UPDATE_STATUS_ROOM_FOR_PLAYER, {
-              room: { status: STATUS_ROOM.READY },
+              room: {
+                status:
+                  this.listRoomOnline[i].controllerGame.idGame === null
+                    ? STATUS_ROOM.READY
+                    : STATUS_ROOM.PLAYING,
+              },
             });
         }
 

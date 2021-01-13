@@ -9,8 +9,12 @@ const controllerUser = require("./controllerUser");
 const SOCKET_TAG = require("./data");
 
 const size = 20;
-
 const LIMIT_TIME = 10;
+const STATUS_ROOM = {
+  WAITING: "waiting",
+  READY: "ready",
+  PLAYING: "playing",
+};
 
 const ControllerGame = class {
   constructor(io, idRoom, idPlayer1, idPlayer2) {
@@ -117,6 +121,10 @@ const ControllerGame = class {
   }
 
   async startGame() {
+    this.io.emit(SOCKET_TAG.RESPONSE_UPDATE_STATUS_ROOM, {
+      room: { id: this.idRoom, status: STATUS_ROOM.PLAYING },
+    });
+
     this.board = Array(size * size).fill(null);
     this.time = LIMIT_TIME;
     const newGame = new gameModel({
@@ -211,6 +219,12 @@ const ControllerGame = class {
       controllerUser.getSocketID(this.idPlayer2),
       SOCKET_TAG.REQUEST_MOVE
     );
+
+    this.io.emit(SOCKET_TAG.RESPONSE_UPDATE_STATUS_ROOM, {
+      room: { id: this.idRoom, status: STATUS_ROOM.READY },
+    });
+
+    this.idGame = null;
   }
 
   reConnect(socketID) {
@@ -229,6 +243,13 @@ const ControllerGame = class {
         ({ index }) => this.handleMove(index)
       );
     }
+
+    this.io
+      .to(this.socketPlayer1)
+      .to(this.socketPlayer1)
+      .emit(SOCKET_TAG.RESPONSE_UPDATE_STATUS_ROOM_FOR_PLAYER, {
+        room: { status: STATUS_ROOM.PLAYING },
+      });
   }
 
   checkDraw() {
