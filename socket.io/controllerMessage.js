@@ -16,6 +16,7 @@ const ControllerMessage = class {
       const newMess = await messageModel({
         idUser,
         idRoom,
+        idGame: room.gameCurrent,
         message,
       }).save();
       const time = new Date(newMess.created_at);

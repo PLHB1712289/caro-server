@@ -88,7 +88,8 @@ const config = (server) => {
       // Join room
       socket.join(id);
       console.log(`[SOCKET]: JOIN ROOM (ID: ${id})`);
-      controllerRoom.joinRoom(id, socket.id);
+      if (controllerUser.getUserID(socket.id))
+        controllerRoom.joinRoom(id, socket.id);
     });
     // ---<3>---
 
@@ -289,12 +290,13 @@ const config = (server) => {
       // Log
       console.log(`[SOCKET]: disconnect ${socket.id}`);
 
-      // disconnect
-      await controllerUser.userDisconnect(socket.id);
       // leave room
       await controllerRoom.leaveRoom(socket.id);
       // remove socket
       controllerSocket.remove(socket.id);
+
+      // disconnect
+      await controllerUser.userDisconnect(socket.id);
     });
     // ---<11>---
   });

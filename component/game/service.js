@@ -22,12 +22,13 @@ const service = {
     }
   },
 
-  createNewRoom: async (idUser, name, password) => {
+  createNewRoom: async (idUser, name, password, limitTime) => {
     try {
       const newRoom = await new roomModel({
         name,
         password: password ? password : null,
         player1: idUser,
+        limitTime,
       }).save();
 
       const username = await userModel.findOne({ id: idUser });

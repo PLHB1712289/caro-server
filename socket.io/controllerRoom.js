@@ -55,6 +55,7 @@ const ControllerRoom = class {
           )
           .emit(SOCKET_TAG.RESPONSE_UPDATE_STATUS_ROOM_FOR_PLAYER, {
             room: { status: STATUS_ROOM.WAITING },
+            userRemove: { id: controllerUser.getUserID(socketID) },
           });
       } else {
         await roomModel.updateOne(
@@ -85,6 +86,26 @@ const ControllerRoom = class {
         if (socketIDPlayer1 !== socketID && socketIDPlayer2 === null) {
           // update player2
           this.listRoomOnline[i].socketIDPlayer2 = socketID;
+
+          // update status room
+          this.listRoomOnline[i].status = STATUS_ROOM.READY;
+
+          // send request update for client
+          this.io.emit(SOCKET_TAG.RESPONSE_UPDATE_STATUS_ROOM, {
+            room: { id: roomID, status: STATUS_ROOM.READY },
+          });
+
+          if (!this.listRoomOnline[i].controllerGame) {
+            this.io
+              .to(this.listRoomOnline[i].socketIDPlayer1)
+              .to(this.listRoomOnline[i].socketIDPlayer2)
+              .emit(SOCKET_TAG.RESPONSE_UPDATE_STATUS_ROOM_FOR_PLAYER, {
+                room: { status: STATUS_ROOM.READY },
+              });
+          }
+        } else if (socketIDPlayer1 === null) {
+          // update player1
+          this.listRoomOnline[i].socketIDPlayer1 = socketID;
 
           // update status room
           this.listRoomOnline[i].status = STATUS_ROOM.READY;

@@ -36,6 +36,7 @@ const ControllerGame = class {
     this.timmerInterval = null;
     this.updateTimeInterval = null;
     this.time = LIMIT_TIME;
+    this.limitTime = LIMIT_TIME;
   }
 
   async handleMove(index) {
@@ -78,9 +79,15 @@ const ControllerGame = class {
       if (winner === this.player1) {
         player1.totalGameWin = player1.totalGameWin + 1;
         player2.totalGameLose = player2.totalGameLose + 1;
+
+        player1.cup = player1.cup + 2;
+        player2.cup = player2.cup - 1 < 0 ? 0 : player2.cup - 1;
       } else {
         player1.totalGameLose = player1.totalGameLose + 1;
         player2.totalGameWin = player2.totalGameWin + 1;
+
+        player2.cup = player2.cup + 2;
+        player1.cup = player1.cup - 1 < 0 ? 0 : player1.cup - 1;
       }
 
       player1.save();
@@ -89,20 +96,23 @@ const ControllerGame = class {
     }
 
     this.orderTurn++;
-    this.time = LIMIT_TIME;
+    this.time = this.limitTime;
 
     const playerNextTurn =
       this.orderTurn % 2 === 0 ? this.playerX : this.playerO;
 
     this.io
       .to(this.idRoom)
-      .emit(SOCKET_TAG.RESPONSE_TIMMER, { time: LIMIT_TIME });
+      .emit(SOCKET_TAG.RESPONSE_TIMMER, { time: this.limitTime });
 
     this.io
       .to(this.idRoom)
       .emit(SOCKET_TAG.RESPONSE_PLAYER_NEXT_TURN, { player: playerNextTurn });
 
-    this.timmerInterval = setInterval(() => this.timeUp(), LIMIT_TIME * 1000);
+    this.timmerInterval = setInterval(
+      () => this.timeUp(),
+      this.limitTime * 1000
+    );
     this.updateTimeInterval = setInterval(() => this.updateTimmer(), 1000);
   }
 
@@ -120,6 +130,8 @@ const ControllerGame = class {
     const roomDB = await roomModel.findOne({ idRoom: this.idRoom });
     roomDB.gameCurrent = this.idGame;
     roomDB.save();
+    this.time = roomDB.limitTime;
+    this.limitTime = roomDB.limitTime;
 
     const oldGame = await gameModel
       .find({ idRoom: this.idRoom, status: false })
@@ -149,8 +161,11 @@ const ControllerGame = class {
 
     this.io
       .to(this.idRoom)
-      .emit(SOCKET_TAG.RESPONSE_TIMMER, { time: LIMIT_TIME });
-    this.timmerInterval = setInterval(() => this.timeUp(), LIMIT_TIME * 1000);
+      .emit(SOCKET_TAG.RESPONSE_TIMMER, { time: this.limitTime });
+    this.timmerInterval = setInterval(
+      () => this.timeUp(),
+      this.limitTime * 1000
+    );
     this.updateTimeInterval = setInterval(() => this.updateTimmer(), 1000);
 
     controllerSocket.setListener(
@@ -306,9 +321,15 @@ const ControllerGame = class {
       if (winner === this.player1) {
         player1.totalGameWin = player1.totalGameWin + 1;
         player2.totalGameLose = player2.totalGameLose + 1;
+
+        player1.cup = player1.cup + 2;
+        player2.cup = player2.cup - 1 < 0 ? 0 : player2.cup - 1;
       } else {
         player1.totalGameLose = player1.totalGameLose + 1;
         player2.totalGameWin = player2.totalGameWin + 1;
+
+        player2.cup = player2.cup + 2;
+        player1.cup = player1.cup - 1 < 0 ? 0 : player1.cup - 1;
       }
 
       player1.save();

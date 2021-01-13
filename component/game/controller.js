@@ -80,11 +80,12 @@ const controller = {
 
   POST_createNewRoom: async (req, res) => {
     const { id: idUser } = req.user;
-    const { name, password } = req.body;
+    const { name, password, limitTime } = req.body;
     const { success, message, data } = await service.createNewRoom(
       idUser,
       name,
-      password
+      password,
+      limitTime
     );
     res.send({ success, message, data });
   },

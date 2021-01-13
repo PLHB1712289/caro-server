@@ -14,6 +14,7 @@ module.exports = mongoose.model(
     totalGame: { type: Number, default: 0 },
     totalGameWin: { type: Number, default: 0 },
     totalGameLose: { type: Number, default: 0 },
+    cup: { type: Number, default: 0 },
     avatarUrl: {
       type: String,
       default:
