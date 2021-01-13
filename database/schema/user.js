@@ -20,6 +20,7 @@ module.exports = mongoose.model(
       default:
         "https://res.cloudinary.com/dofdj0lqd/image/upload/v1610186880/aqutfu6ccnjdqo9vd3zb.png",
     },
+    createdDate:{type:String},
     fullname: { type: String, default: null },
   })
 );

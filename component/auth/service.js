@@ -349,6 +349,40 @@ const service = {
       };
     }
   },
+  getListUserRank:async(limit)=>{
+    try {
+      let userListRank = await userModel.find().sort({cup:-1}).limit(limit);
+
+      console.log("USER list rank:", userListRank);
+      if (!userListRank) {
+        return {
+          success: false,
+          message: "Get list user rank failed",
+          data: null,
+        };
+      }
+      if (userListRank) {
+        
+        return {
+          success: true,
+          message: "Success.",
+          data: userListRank,
+        };
+      }
+
+      return {
+        success: false,
+        message: "Get list user rank failed",
+        data: null,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Cannot connect to database.",
+        data: null,
+      };
+    }
+  }
 };
 
 // console.log(createMail.mailActive("1234"));
