@@ -219,11 +219,11 @@ const service = {
       const player1 =
         (await userModel
           .findOne({ id: room.player1 })
-          .select(["-_id", "id", "username"])) || null;
+          .select(["-_id", "id", "username", "avatarUrl"])) || null;
       const player2 =
         (await userModel
           .findOne({ id: room.player2 })
-          .select(["-_id", "id", "username"])) || null;
+          .select(["-_id", "id", "username", "avatarUrl"])) || null;
 
       let history = [];
       console.log("ROOM:", room);
@@ -239,6 +239,7 @@ const service = {
       const roomResponse = {
         becomePlayer,
         id: idRoom,
+        idGame: room.gameCurrent,
         player1,
         player2,
         password: room.password,

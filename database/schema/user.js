@@ -14,8 +14,12 @@ module.exports = mongoose.model(
     totalGame: { type: Number, default: 0 },
     totalGameWin: { type: Number, default: 0 },
     totalGameLose: { type: Number, default: 0 },
-    avatarUrl:{type:String,default:null},
-    fullname:{type:String,default:null}
+    avatarUrl: {
+      type: String,
+      default:
+        "https://res.cloudinary.com/dofdj0lqd/image/upload/v1610186880/aqutfu6ccnjdqo9vd3zb.png",
+    },
+    fullname: { type: String, default: null },
   })
 );
 

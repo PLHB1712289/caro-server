@@ -199,13 +199,21 @@ const ControllerGame = class {
   }
 
   reConnect(socketID) {
-    // console.log("RECONNECT");
-    // this.io.to(socketID).emit(SOCKET_TAG.RESPONSE_RECONNECT, {
-    //   board: this.board,
-    //   playerX: this.playerX,
-    //   playerO: this.playerO,
-    //   currentPlayer: this.orderTurn % 2 !== 0 ? this.playerX : this.playerO,
-    // });
+    console.log("RECONNECT");
+    this.io.to(socketID).emit(SOCKET_TAG.RESPONSE_RECONNECT, {
+      board: this.board,
+      playerX: this.playerX,
+      currentPlayer: this.orderTurn % 2 !== 0 ? this.playerO : this.playerX,
+    });
+
+    const userID = controllerUser.getUserID(socketID);
+    if (userID === this.idPlayer1 || userID === this.idPlayer2) {
+      controllerSocket.setListener(
+        socketID,
+        SOCKET_TAG.REQUEST_MOVE,
+        ({ index }) => this.handleMove(index)
+      );
+    }
   }
 
   checkDraw() {

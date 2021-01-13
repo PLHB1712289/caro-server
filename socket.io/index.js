@@ -275,6 +275,15 @@ const config = (server) => {
     // ---</9>---
 
     // ---<10>---
+    // Receive request reconnect game
+    socket.on(SOCKET_TAG.REQUEST_RECONNECT, ({ idRoom }) => {
+      const room = controllerRoom.getRoomByID(idRoom);
+
+      if (!room) room.controllerGame.reConnect(socket.id);
+    });
+    // ---</10>---
+
+    // ---<11>---
     // Handle event when user disconnect, update list user online
     socket.on("disconnect", async () => {
       // Log
@@ -287,7 +296,7 @@ const config = (server) => {
       // remove socket
       controllerSocket.remove(socket.id);
     });
-    // ---<10>---
+    // ---<11>---
   });
 
   console.log("Config socket.io success");

@@ -119,6 +119,15 @@ const ControllerRoom = class {
     });
   }
 
+  getRoomByID(roomID) {
+    const room = this.listRoomOnline.filter((itemRoom) => {
+      if (itemRoom.id === roomID) return itemRoom;
+      return null;
+    });
+
+    return room[0];
+  }
+
   async newGame(roomID) {
     let gameID = null;
     for (let i = 0; i < this.listRoomOnline.length; i++) {
