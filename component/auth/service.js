@@ -5,7 +5,10 @@ const config = require("../../config");
 const bcrypt = require("bcryptjs");
 const { generateGUID, sendMail, generateUsername } = require("../../util");
 const { service: serviceIO } = require("../../socket.io");
-
+const date=new Date().getDate();
+const month=new Date().getMonth()+1;
+const year=new Date().getFullYear();
+const currentDate=date+"/"+month+"/"+year;
 const service = {
   signIn: async (username, password) => {
     console.log(username, password);
@@ -72,7 +75,9 @@ const service = {
 
       // create new user if not exist
       if (!user) {
+        
         user = await new userModel({
+          createdDate:currentDate,
           email,
           avatarUrl:picture.data.url,
           fullname:name,
@@ -117,7 +122,10 @@ const service = {
 
       // create new user if not exist
       if (!user) {
+        
         user = await new userModel({
+          createdDate:currentDate,
+
           avatarUrl:picture,
           fullname: name,
           email,
@@ -165,6 +173,8 @@ const service = {
         const codeActive = generateGUID();
 
         user = await new userModel({
+          createdDate:currentDate,
+
           username,
           email,
           password: hashPassword,
@@ -211,8 +221,11 @@ const service = {
   },
   getUser: async (id) => {
     let user = await userModel.findOne({ id });
+    // let listUser=await userModel.find().sort({totalGame:-1}).limit(1);
+    //console.log("List user:",listUser);
     return { success: true, message: "Success", data: user };
   },
+  
   changePassword: async (userId, oldPassword, newPassword) => {
     try {
       let user = await userModel.findOne({ id: userId });

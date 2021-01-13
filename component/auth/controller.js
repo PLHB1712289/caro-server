@@ -59,11 +59,15 @@ const controller = {
     const {success,message,data}=await service.getUser(userId);
     res.send({success,message,data});
   },
+  GET_user_by_id:async(req,res)=>{
+    const {userId} =req.body;
+
+    const {success,message,data}=await service.getUser(userId);
+    res.send({success,message,data});
+  },
   POST_changePassword:async(req,res)=>{
-    console.log("Chui vao day roi ne, change password");
     const userId=req.user.id;
     const {oldPassword,newPassword}=req.body;
-    console.log("userid,old,new:",userId,oldPassword,newPassword);
     const {success,message,data}=await service.changePassword(userId,oldPassword,newPassword); 
     res.send({success,message,data});
   },
@@ -76,6 +80,7 @@ const controller = {
   },
   POST_updateUser:async(req,res)=>{
     const {avatarUrl,fullname}=req.body;
+
     const userId=req.user.id;
     console.log("Check userid:",userId);
     const {success,message,data}=await service.updateUser(userId,avatarUrl,fullname); 
