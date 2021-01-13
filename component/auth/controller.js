@@ -86,7 +86,11 @@ const controller = {
     const {success,message,data}=await service.updateUser(userId,avatarUrl,fullname); 
     res.send({success,message,data});
   },
-
+  GET_list_user_rank:async(req,res)=>{
+    const limit=20;
+    const {success,message,data}=await service.getListUserRank(limit);
+    res.send({success,message,data});
+  }
 };
 
 module.exports = controller;
