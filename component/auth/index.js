@@ -9,6 +9,8 @@ router.post("/sign-in/google", controller.POST_signInWithGG);
 router.post("/sign-up", controller.POST_signUp);
 
 router.get("/active", controller.GET_active);
+router.post("/get-user-by-id", controller.GET_user_by_id);
+
 router.get("/profile",checkAuthorization(), controller.GET_user);
 router.post("/update",checkAuthorization(), controller.POST_updateUser);
 
