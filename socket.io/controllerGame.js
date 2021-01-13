@@ -67,35 +67,14 @@ const ControllerGame = class {
     }).save();
 
     if (this.checkDraw().gameover === true) {
-      this.stopGame();
+      this.sendNotifyDraw();
       return;
     }
 
     const { gameover, winner } = this.checkWin(index);
 
     if (gameover) {
-      this.io.to(this.idRoom).emit(SOCKET_TAG.RESPONSE_WINNER, { winner });
-      this.stopGame();
-
-      const player1 = await userModel.findOne({ id: this.idPlayer1 });
-      const player2 = await userModel.findOne({ id: this.idPlayer2 });
-
-      if (winner === this.player1) {
-        player1.totalGameWin = player1.totalGameWin + 1;
-        player2.totalGameLose = player2.totalGameLose + 1;
-
-        player1.cup = player1.cup + 2;
-        player2.cup = player2.cup - 1 < 0 ? 0 : player2.cup - 1;
-      } else {
-        player1.totalGameLose = player1.totalGameLose + 1;
-        player2.totalGameWin = player2.totalGameWin + 1;
-
-        player2.cup = player2.cup + 2;
-        player1.cup = player1.cup - 1 < 0 ? 0 : player1.cup - 1;
-      }
-
-      player1.save();
-      player2.save();
+      this.sendNotifyWin(winner);
       return;
     }
 
@@ -158,7 +137,7 @@ const ControllerGame = class {
     }
 
     newGame.playerX = this.playerX;
-    newGame.save();
+    await newGame.save();
 
     // response user who is the playerX and gameID current
     this.io.to(this.idRoom).emit(SOCKET_TAG.RESPONSE_INFO_PLAYER_XO, {
@@ -188,6 +167,92 @@ const ControllerGame = class {
       ({ index }) => this.handleMove(index)
     );
 
+    controllerSocket.setListener(
+      controllerUser.getSocketID(this.idPlayer1),
+      SOCKET_TAG.REQUEST_DRAW,
+      async (confirm) => {
+        if (confirm === null) {
+          const user = await userModel
+            .findOne({ id: this.idPlayer1 })
+            .select("-_id username");
+          this.io
+            .to(controllerUser.getSocketID(this.idPlayer2))
+            .emit(SOCKET_TAG.RESPONSE_DRAW, {
+              idUser: this.idPlayer1,
+              username: user.username,
+            });
+        } else {
+          // stop game
+          this.sendNotifyDraw();
+        }
+      }
+    );
+
+    controllerSocket.setListener(
+      controllerUser.getSocketID(this.idPlayer2),
+      SOCKET_TAG.REQUEST_DRAW,
+      async (confirm) => {
+        if (confirm === null) {
+          const user = await userModel
+            .findOne({ id: this.idPlayer1 })
+            .select("-_id username");
+          this.io
+            .to(controllerUser.getSocketID(this.idPlayer1))
+            .emit(SOCKET_TAG.RESPONSE_DRAW, {
+              idUser: this.idPlayer2,
+              username: user.username,
+            });
+        } else {
+          // stop game
+          this.sendNotifyDraw();
+        }
+      }
+    );
+
+    controllerSocket.setListener(
+      controllerUser.getSocketID(this.idPlayer1),
+      SOCKET_TAG.REQUEST_SURRENDER,
+      async (confirm) => {
+        if (confirm === null) {
+          const user = await userModel
+            .findOne({ id: this.idPlayer1 })
+            .select("-_id username");
+          this.io
+            .to(controllerUser.getSocketID(this.idPlayer2))
+            .emit(SOCKET_TAG.RESPONSE_SURRENDER, {
+              idUser: this.idPlayer1,
+              username: user.username,
+            });
+        } else {
+          // stop game
+          console.log("WIN");
+          this.sendNotifyWin(this.idPlayer1);
+        }
+      }
+    );
+
+    controllerSocket.setListener(
+      controllerUser.getSocketID(this.idPlayer2),
+      SOCKET_TAG.REQUEST_SURRENDER,
+      async (confirm) => {
+        if (confirm === null) {
+          const user = await userModel
+            .findOne({ id: this.idPlayer1 })
+            .select("-_id username");
+          this.io
+            .to(controllerUser.getSocketID(this.idPlayer1))
+            .emit(SOCKET_TAG.RESPONSE_SURRENDER, {
+              idUser: this.idPlayer2,
+              username: user.username,
+            });
+        } else {
+          // stop game
+          console.log("WIN");
+          this.sendNotifyWin(this.idPlayer2);
+        }
+      }
+    );
+
     const player1 = await userModel.findOne({ id: this.idPlayer1 });
     const player2 = await userModel.findOne({ id: this.idPlayer2 });
 
@@ -200,12 +265,61 @@ const ControllerGame = class {
     return newGame._id;
   }
 
+  async sendNotifyWin(winner) {
+    console.log("WINNER:", winner);
+    clearInterval(this.timmerInterval);
+    clearInterval(this.updateTimeInterval);
+
+    this.timmerInterval = null;
+    this.updateTimmerInterval = null;
+
+    this.io.to(this.idRoom).emit(SOCKET_TAG.RESPONSE_WINNER, { winner });
+    const game = await gameModel.findOne({ _id: this.idGame });
+    game.winner = winner;
+    game.save();
+
+    this.stopGame();
+
+    const player1 = await userModel.findOne({ id: this.idPlayer1 });
+    const player2 = await userModel.findOne({ id: this.idPlayer2 });
+
+    if (winner === this.player1) {
+      player1.totalGameWin = player1.totalGameWin + 1;
+      player2.totalGameLose = player2.totalGameLose + 1;
+
+      player1.cup = player1.cup + 2;
+      player2.cup = player2.cup - 1 < 0 ? 0 : player2.cup - 1;
+    } else {
+      player1.totalGameLose = player1.totalGameLose + 1;
+      player2.totalGameWin = player2.totalGameWin + 1;
+
+      player2.cup = player2.cup + 2;
+      player1.cup = player1.cup - 1 < 0 ? 0 : player1.cup - 1;
+    }
+
+    player1.save();
+    player2.save();
+  }
+
+  sendNotifyDraw() {
+    clearInterval(this.timmerInterval);
+    clearInterval(this.updateTimeInterval);
+
+    this.timmerInterval = null;
+    this.updateTimmerInterval = null;
+
+    this.io.to(this.idRoom).emit(SOCKET_TAG.RESPONSE_WINNER, { winner: null });
+    this.stopGame();
+  }
+
   async stopGame() {
     console.log("REMOVE LISTENER");
 
     const game = await gameModel.findOne({ _id: this.idGame });
-    game.status = false;
-    game.save();
+    if (game) {
+      game.status = false;
+      game.save();
+    }
 
     const roomDB = await roomModel.findOne({ idRoom: this.idRoom });
     roomDB.gameCurrent = null;
@@ -333,8 +447,10 @@ const ControllerGame = class {
       this.updateTimeInterval = null;
 
       const game = await gameModel.findOne({ _id: this.idGame });
-      game.winner = winner;
-      game.save();
+      if (game) {
+        game.winner = winner;
+        game.save();
+      }
 
       const player1 = await userModel.findOne({ id: this.idPlayer1 });
       const player2 = await userModel.findOne({ id: this.idPlayer2 });
