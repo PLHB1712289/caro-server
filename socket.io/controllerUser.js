@@ -6,8 +6,6 @@ const ControllerUser = class {
     this.listUserOnline = [];
     this.io = null;
 
-    console.log("[CONTROLL USER]: Create new instance of ControlUserOnline");
-
     // (() => {
     //   setInterval(() => {
     //     console.log("[LIST_USER_ONLINE]:", this.listUserOnline);
@@ -88,6 +86,16 @@ const ControllerUser = class {
     }
 
     return null;
+  }
+
+  checkOnline(userID) {
+    for (let i = 0; i < this.listUserOnline.length; i++) {
+      if (this.listUserOnline[i].idUser === userID) {
+        return true;
+      }
+    }
+
+    return false;
   }
 };
 

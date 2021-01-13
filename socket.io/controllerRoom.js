@@ -178,6 +178,19 @@ const ControllerRoom = class {
     }
     return gameID;
   }
+
+  checkUserInRoom(idSocket) {
+    for (let i = 0; i < this.listRoomOnline.length; i++) {
+      if (
+        this.listRoomOnline[i].socketIDPlayer1 === idSocket ||
+        this.listRoomOnline[i].socketIDPlayer2 === idSocket
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  }
 };
 
 const controllerRoom = new ControllerRoom();

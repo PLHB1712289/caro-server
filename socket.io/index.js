@@ -14,36 +14,6 @@ const controllerSocket = require("./controllerSocket");
 
 let io = null;
 
-const timeCounter = async (
-  idRoom,
-  idGame,
-  idPlayer1,
-  idPlayer2,
-  player,
-  timmerPlayer1,
-  timmerPlayer2
-) => {
-  while (timmerPlayer1 >= 0 && timmerPlayer2 >= 0) {
-    io.to(idRoom).emit(SOCKET_TAG.RESPONSE_TIMMER, {
-      time: { timePlayer1: timmerPlayer1, timePlayer2: timmerPlayer2 },
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    if (player === idPlayer1) {
-      timmerPlayer1--;
-    } else {
-      timmerPlayer2--;
-    }
-  }
-
-  const playerTimeUp = timmerPlayer1 < 0 ? "player1" : "player2";
-
-  io.to(idRoom).emit(SOCKET_TAG.RESPONSE_TIME_UP, {
-    player: playerTimeUp,
-  });
-};
-
 const getIO = () => {
   return io;
 };
@@ -154,14 +124,6 @@ const config = (server) => {
         const newRoom = await new roomModel({
           player1: controllerUser.getUserID(player1),
         }).save();
-
-        console.log("ROOM:", newRoom);
-
-        // controllerSocket.get(player1).join(newRoom.id);
-        // controllerSocket.get(player2).join(newRoom.id);
-
-        // console.log(`[SOCKET]: JOIN ROOM (ID: ${id})`);
-        // controllerRoom.joinRoom(id, socket.id);
 
         // Get info player
         const userNamePlayer1 = await userModel
@@ -285,6 +247,72 @@ const config = (server) => {
     // ---</10>---
 
     // ---<11>---
+    // Receive request invite
+    socket.on(SOCKET_TAG.REQUEST_INVITE, async ({ idPlayer, idRoom }) => {
+      if (!controllerUser.checkOnline(idPlayer)) {
+        io.to(socket.id).emit(SOCKET_TAG.RESPONSE_INVITE, {
+          success: false,
+          message: "Player offline",
+        });
+
+        return;
+      }
+
+      if (
+        !controllerRoom.checkUserInRoom(controllerUser.getSocketID(idPlayer))
+      ) {
+        io.to(socket.id).emit(SOCKET_TAG.RESPONSE_INVITE, {
+          success: false,
+          message: "Player is playing",
+        });
+
+        return;
+      }
+
+      const user = await userModel
+        .findOne({
+          id: controllerUser.getUserID(socket.id),
+        })
+        .select("-_id id username");
+
+      io.to(controllerUser.getSocketID(idPlayer)).emit(
+        SOCKET_TAG.RESPONSE_INVITE_CONFIRM,
+        {
+          usernameInvite: user.username,
+          idUserInvite: user.id,
+          idRoom: idRoom,
+        }
+      );
+    });
+    // ---</11>---
+
+    // ---<12>---
+    // Receive request invite
+    socket.on(
+      SOCKET_TAG.REQUEST_INVITE_CONFIRM,
+      ({ confirm, idUserInvite }) => {
+        if (confirm) {
+          io.to(controllerUser.getSocketID(idUserInvite)).emit(
+            SOCKET_TAG.RESPONSE_INVITE,
+            {
+              success: true,
+              message: "success",
+            }
+          );
+        } else {
+          io.to(controllerUser.getSocketID(idUserInvite)).emit(
+            SOCKET_TAG.RESPONSE_INVITE,
+            {
+              success: false,
+              message: "The offer was rejected",
+            }
+          );
+        }
+      }
+    );
+    // ---</12>---
+
+    // ---<13>---
     // Handle event when user disconnect, update list user online
     socket.on("disconnect", async () => {
       // Log
@@ -298,7 +326,7 @@ const config = (server) => {
       // disconnect
       await controllerUser.userDisconnect(socket.id);
     });
-    // ---<11>---
+    // ---<13>---
   });
 
   console.log("Config socket.io success");
