@@ -114,7 +114,7 @@ const ControllerGame = class {
       player1: this.idPlayer1,
       player2: this.idPlayer2,
     });
-    newGame.save();
+
     this.idGame = newGame._id;
     this.orderTurn = 0;
     const roomDB = await roomModel.findOne({ idRoom: this.idRoom });
@@ -136,6 +136,9 @@ const ControllerGame = class {
       this.playerX = this.idPlayer2;
       this.playerO = this.idPlayer1;
     }
+
+    newGame.playerX = this.playerX;
+    newGame.save();
 
     // response user who is the playerX and gameID current
     this.io.to(this.idRoom).emit(SOCKET_TAG.RESPONSE_INFO_PLAYER_XO, {

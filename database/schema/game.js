@@ -6,6 +6,7 @@ module.exports = mongoose.model(
     idRoom: String,
     player1: String,
     player2: { type: String, default: null },
+    playerX: { type: String, default: null },
     status: { type: Boolean, default: true }, // true: playing - false: finished
     winner: { type: String, default: null },
     created_at: { type: Date, default: Date.now },
