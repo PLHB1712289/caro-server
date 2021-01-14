@@ -12,6 +12,7 @@ const service = {
           "totalGame",
           "totalGameWin",
           "totalGameLose",
+          "avatarUrl",
         ]);
 
       return {

@@ -336,10 +336,17 @@ const config = (server) => {
 const service = {
   // updateUserOnline is used when another user sign in
   updateUserOnline: (user) => {
-    const { id, totalGame, totalGameWin, totalGameLose, username } = user;
+    const {
+      id,
+      totalGame,
+      totalGameWin,
+      totalGameLose,
+      username,
+      avatarUrl,
+    } = user;
 
     io.emit(SOCKET_TAG.RESPONSE_USER_ONLINE, {
-      user: { id, totalGame, totalGameWin, totalGameLose, username },
+      user: { id, totalGame, totalGameWin, totalGameLose, username, avatarUrl },
     });
   },
 

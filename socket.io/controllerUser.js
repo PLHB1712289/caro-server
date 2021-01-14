@@ -32,7 +32,9 @@ const ControllerUser = class {
         "totalGame",
         "totalGameWin",
         "totalGameLose",
+        "avatarUrl",
       ]);
+
     // Update status isOnline
     await userModel.updateOne({ id: userID }, { isOnline: true });
     // Response for client
