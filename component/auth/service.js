@@ -359,6 +359,7 @@ const service = {
     try {
       let user = await userModel.findOne({ id: userId });
       console.log("Check user:", user);
+
       if (!user) {
         return {
           success: false,
@@ -366,6 +367,7 @@ const service = {
           data: null,
         };
       }
+
       if (user) {
         user.avatarUrl = avatarUrl;
         user.fullname = fullname;

@@ -12,6 +12,8 @@ const NUMBER_GAME = 10;
 const NUMBER_MOVE = 10;
 const NUMBER_MESSAGE = 10;
 
+console.log("GENERATE DATA EXAMPLE");
+
 const size = 20;
 
 (async () => {
@@ -37,20 +39,18 @@ const size = 20;
 
       for (let numberGame = 0; numberGame < NUMBER_GAME; numberGame++) {
         player1.totalGame = player1.totalGame + 1;
+
         player1.totalGameWin =
-          player1.totalGame + (numberGame % 2) !== 0 ? 1 : 0;
+          player1.totalGameWin + (numberGame % 2) !== 0 ? 1 : 0;
+
         player1.totalGameLose =
-          player1.totalGame + player1.totalGame + (numberGame % 2) !== 0
-            ? 0
-            : 1;
+          player1.totalGameLose + (numberGame % 2) !== 0 ? 0 : 1;
 
         player2.totalGame = player2.totalGame + 1;
         player2.totalGameWin =
-          player2.totalGame + (numberGame % 2) !== 0 ? 0 : 1;
+          player2.totalGameWin + (numberGame % 2) !== 0 ? 0 : 1;
         player2.totalGameLose =
-          player2.totalGame + player2.totalGame + (numberGame % 2) !== 0
-            ? 1
-            : 0;
+          player2.totalGameLose + (numberGame % 2) !== 0 ? 1 : 0;
 
         player1.cup =
           player1.cup + player1.totalGameWin * 2 - player1.totalGameLose;
