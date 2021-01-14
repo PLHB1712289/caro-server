@@ -288,7 +288,7 @@ const service = {
       .sort({ created_at: -1 })
       .limit(10)
       .skip(10 * (page - 1))
-      .select("player1 player2 created_at idRoom");
+      .select("player1 player2 created_at idRoom winner");
 
     const gameCount = await gameModel
       .find({
@@ -296,7 +296,18 @@ const service = {
       })
       .sort({ created_at: -1 })
       .select("player1");
-    return { listGame, totalItem: gameCount.length };
+
+    return {
+      listGame: listGame.map((item) => ({
+        _id: item._id,
+        player1: item.player1,
+        player2: item.player2,
+        created_at: item.created_at,
+        idRoom: item.idRoom,
+        win: item.winner === idUser,
+      })),
+      totalItem: gameCount.length,
+    };
   },
 
   getHistoryDetailGame: async (idUser, idGame) => {

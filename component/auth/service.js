@@ -221,7 +221,7 @@ const service = {
     const user = await userModel
       .findOne({ id })
       .select(
-        "-_id email username id fullname avatarUrl totalGame totalGameLose totalGameWin cup"
+        "-_id email username id fullname avatarUrl totalGame totalGameLose totalGameWin cup createdDate"
       );
 
     const listUserRank = await userModel
@@ -245,6 +245,7 @@ const service = {
       totalGameLose,
       totalGameWin,
       cup,
+      createdDate,
     } = user;
 
     return {
@@ -262,6 +263,7 @@ const service = {
         cup,
         rank,
         totalUser: listUserRank.length,
+        createdDate,
       },
     };
   },

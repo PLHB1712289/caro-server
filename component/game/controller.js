@@ -103,6 +103,7 @@ const controller = {
     const { page } = req.query;
     const idUser = req.user.id;
     const response = await service.getHistoryGame(idUser, page);
+    console.log("response:", response);
     res.send({ success: true, message: "success", data: response });
   },
 
