@@ -84,20 +84,33 @@ const service = {
     }
   },
 
-  getMessage: async ({ idRoom, idUser }) => {
+  getMessage: async ({ idRoom, idUser, idGame }) => {
     try {
-      const listMessage = await messageModel.find({ idRoom });
+      let listMessage;
+      let idPlayer1, idPlayer2;
 
-      const room = await roomModel
-        .findOne({ idRoom })
-        .select(["-_id", "player1", "player2"]);
+      if (idGame) {
+        listMessage = await messageModel.find({ idGame });
+        const game = await gameModel.findOne({ _id: idGame });
+        idPlayer1 = game.player1;
+        idPlayer2 = game.player2;
+      } else {
+        listMessage = await messageModel.find({ idRoom });
+
+        const room = await roomModel
+          .findOne({ idRoom })
+          .select(["-_id", "player1", "player2"]);
+
+        idPlayer1 = room.player1;
+        idPlayer2 = room.player2;
+      }
 
       const player1 = await userModel
-        .findOne({ id: room.player1 })
+        .findOne({ id: idPlayer1 })
         .select(["-_id", "id", "username"]);
 
       const player2 = await userModel
-        .findOne({ id: room.player2 })
+        .findOne({ id: idPlayer2 })
         .select(["-_id", "id", "username"]);
 
       const idUserReplace = idUser || player1.id;
@@ -266,6 +279,43 @@ const service = {
     } catch (e) {
       return { success: false, message: "Failed", data: {} };
     }
+  },
+  getHistoryGame: async (idUser, page) => {
+    const listGame = await gameModel
+      .find({
+        $or: [{ player1: idUser }, { player2: idUser }],
+      })
+      .sort({ created_at: -1 })
+      .limit(10)
+      .skip(10 * (page - 1))
+      .select("player1 player2 created_at idRoom");
+
+    const gameCount = await gameModel
+      .find({
+        $or: [{ player1: idUser }, { player2: idUser }],
+      })
+      .sort({ created_at: -1 })
+      .select("player1");
+    return { listGame, totalItem: gameCount.length };
+  },
+
+  getHistoryDetailGame: async (idUser, idGame) => {
+    const game = await gameModel.findOne({ _id: idGame });
+
+    const player1 = await userModel
+      .findOne({ id: game.player1 })
+      .select("-_id id username avatarUrl");
+    const player2 = await userModel
+      .findOne({ id: game.player2 })
+      .select("-_id id username avatarUrl");
+
+    const history = await moveModel
+      .find({ idGame })
+      .sort({ created_at: 1 })
+      .select("-_id board index");
+
+    // console.log({ player1, player2, game, history });
+    return { player1, player2, game, history };
   },
 };
 

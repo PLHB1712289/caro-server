@@ -5,10 +5,10 @@ const config = require("../../config");
 const bcrypt = require("bcryptjs");
 const { generateGUID, sendMail, generateUsername } = require("../../util");
 const { service: serviceIO } = require("../../socket.io");
-const date=new Date().getDate();
-const month=new Date().getMonth()+1;
-const year=new Date().getFullYear();
-const currentDate=date+"/"+month+"/"+year;
+const date = new Date().getDate();
+const month = new Date().getMonth() + 1;
+const year = new Date().getFullYear();
+const currentDate = date + "/" + month + "/" + year;
 const service = {
   signIn: async (username, password) => {
     console.log(username, password);
@@ -55,7 +55,7 @@ const service = {
     }
   },
   signInWithFB: async (id, accessToken) => {
-    console.log("User id in signin fb:",id);
+    console.log("User id in signin fb:", id);
     const url = `https://graph.facebook.com/${id}`;
 
     const query = {
@@ -68,19 +68,18 @@ const service = {
       const response = await axiosClient.post(url, query);
 
       console.log("Response in auth facebook ", response);
-      const { email, name,picture } = response;
+      const { email, name, picture } = response;
 
       // check user in DB
       let user = await userModel.findOne({ email });
 
       // create new user if not exist
       if (!user) {
-        
         user = await new userModel({
-          createdDate:currentDate,
+          createdDate: currentDate,
           email,
-          avatarUrl:picture.data.url,
-          fullname:name,
+          avatarUrl: picture.data.url,
+          fullname: name,
           username: generateUsername(name),
         }).save();
       }
@@ -115,18 +114,17 @@ const service = {
     try {
       // get in4 user on FB
       const response = await axiosClient.post(url, query);
-      const { email, name,picture } = response;
-      console.log("User gg:",response);
+      const { email, name, picture } = response;
+      console.log("User gg:", response);
       // check user in DB
       let user = await userModel.findOne({ email });
 
       // create new user if not exist
       if (!user) {
-        
         user = await new userModel({
-          createdDate:currentDate,
+          createdDate: currentDate,
 
-          avatarUrl:picture,
+          avatarUrl: picture,
           fullname: name,
           email,
           username: generateUsername(name),
@@ -173,7 +171,7 @@ const service = {
         const codeActive = generateGUID();
 
         user = await new userModel({
-          createdDate:currentDate,
+          createdDate: currentDate,
 
           username,
           email,
@@ -220,12 +218,54 @@ const service = {
     }
   },
   getUser: async (id) => {
-    let user = await userModel.findOne({ id });
-    // let listUser=await userModel.find().sort({totalGame:-1}).limit(1);
-    //console.log("List user:",listUser);
-    return { success: true, message: "Success", data: user };
+    const user = await userModel
+      .findOne({ id })
+      .select(
+        "-_id email username id fullname avatarUrl totalGame totalGameLose totalGameWin cup"
+      );
+
+    const listUserRank = await userModel
+      .find({})
+      .select("-_id id cup")
+      .sort({ cup: -1 });
+
+    let rank = 1;
+    for (let i = 0; i < listUserRank.length; i++) {
+      if (listUserRank[i].id !== id) {
+        rank++;
+      } else break;
+    }
+
+    const {
+      email,
+      username,
+      fullname,
+      avatarUrl,
+      totalGame,
+      totalGameLose,
+      totalGameWin,
+      cup,
+    } = user;
+
+    return {
+      success: true,
+      message: "Success",
+      data: {
+        email,
+        username,
+        id,
+        fullname,
+        avatarUrl,
+        totalGame,
+        totalGameLose,
+        totalGameWin,
+        cup,
+        rank,
+        totalUser: listUserRank.length,
+      },
+    };
   },
-  
+
   changePassword: async (userId, oldPassword, newPassword) => {
     try {
       let user = await userModel.findOne({ id: userId });
@@ -313,10 +353,10 @@ const service = {
     }
   },
 
-  updateUser: async (userId,avatarUrl,fullname) => {
+  updateUser: async (userId, avatarUrl, fullname) => {
     try {
-      let user = await userModel.findOne({ id:userId });
-      console.log("Check user:",user);
+      let user = await userModel.findOne({ id: userId });
+      console.log("Check user:", user);
       if (!user) {
         return {
           success: false,
@@ -324,11 +364,11 @@ const service = {
           data: null,
         };
       }
-      if (user) {        
-        user.avatarUrl=avatarUrl;
-        user.fullname=fullname;
+      if (user) {
+        user.avatarUrl = avatarUrl;
+        user.fullname = fullname;
         await user.save();
-        console.log("Check user after update:",user);
+        console.log("Check user after update:", user);
         return {
           success: true,
           message: "Update profile successfully.",
@@ -349,9 +389,9 @@ const service = {
       };
     }
   },
-  getListUserRank:async(limit)=>{
+  getListUserRank: async (limit) => {
     try {
-      let userListRank = await userModel.find().sort({cup:-1}).limit(limit);
+      let userListRank = await userModel.find().sort({ cup: -1 }).limit(limit);
 
       console.log("USER list rank:", userListRank);
       if (!userListRank) {
@@ -362,7 +402,6 @@ const service = {
         };
       }
       if (userListRank) {
-        
         return {
           success: true,
           message: "Success.",
@@ -382,7 +421,7 @@ const service = {
         data: null,
       };
     }
-  }
+  },
 };
 
 // console.log(createMail.mailActive("1234"));

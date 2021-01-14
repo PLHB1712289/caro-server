@@ -53,44 +53,52 @@ const controller = {
 
     res.send(message);
   },
-  GET_user:async(req,res)=>{
-    const userId =req.user.id;
-    console.log("This is user id ",req.user.id);
-    const {success,message,data}=await service.getUser(userId);
-    res.send({success,message,data});
+  GET_user: async (req, res) => {
+    const userId = req.user.id;
+    console.log("This is user id ", req.user.id);
+    const { success, message, data } = await service.getUser(userId);
+    res.send({ success, message, data });
   },
-  GET_user_by_id:async(req,res)=>{
-    const {userId} =req.body;
+  GET_user_by_id: async (req, res) => {
+    const { userId } = req.body;
 
-    const {success,message,data}=await service.getUser(userId);
-    res.send({success,message,data});
+    const { success, message, data } = await service.getUser(userId);
+    res.send({ success, message, data });
   },
-  POST_changePassword:async(req,res)=>{
-    const userId=req.user.id;
-    const {oldPassword,newPassword}=req.body;
-    const {success,message,data}=await service.changePassword(userId,oldPassword,newPassword); 
-    res.send({success,message,data});
+  POST_changePassword: async (req, res) => {
+    const userId = req.user.id;
+    const { oldPassword, newPassword } = req.body;
+    const { success, message, data } = await service.changePassword(
+      userId,
+      oldPassword,
+      newPassword
+    );
+    res.send({ success, message, data });
   },
-  POST_forgotPassword:async(req,res)=>{
-    console.log("Controller check req.body:",req.body);
-    const {email}=req.body;
-    console.log("Controller mail:",email);
-    const {success,message,data}=await service.forgotPassword(email); 
-    res.send({success,message,data});
+  POST_forgotPassword: async (req, res) => {
+    console.log("Controller check req.body:", req.body);
+    const { email } = req.body;
+    console.log("Controller mail:", email);
+    const { success, message, data } = await service.forgotPassword(email);
+    res.send({ success, message, data });
   },
-  POST_updateUser:async(req,res)=>{
-    const {avatarUrl,fullname}=req.body;
+  POST_updateUser: async (req, res) => {
+    const { avatarUrl, fullname } = req.body;
 
-    const userId=req.user.id;
-    console.log("Check userid:",userId);
-    const {success,message,data}=await service.updateUser(userId,avatarUrl,fullname); 
-    res.send({success,message,data});
+    const userId = req.user.id;
+    console.log("Check userid:", userId);
+    const { success, message, data } = await service.updateUser(
+      userId,
+      avatarUrl,
+      fullname
+    );
+    res.send({ success, message, data });
   },
-  GET_list_user_rank:async(req,res)=>{
-    const limit=20;
-    const {success,message,data}=await service.getListUserRank(limit);
-    res.send({success,message,data});
-  }
+  GET_list_user_rank: async (req, res) => {
+    const limit = 20;
+    const { success, message, data } = await service.getListUserRank(limit);
+    res.send({ success, message, data });
+  },
 };
 
 module.exports = controller;

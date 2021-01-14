@@ -40,6 +40,7 @@ const controller = {
   // Lay tin nhan
   GET_getMessage: async (req, res) => {
     const idRoom = req.query.id;
+    const idGame = req.query.idGame;
     const idUser = getIDUserFromToken(req.query.token);
 
     console.log("[GET MESSAGE]");
@@ -47,9 +48,8 @@ const controller = {
     const { success, message, listMessage } = await service.getMessage({
       idRoom,
       idUser,
+      idGame,
     });
-
-    console.log("List message:", listMessage);
 
     res.send({ success, message, data: { listMessage } });
   },
@@ -97,6 +97,23 @@ const controller = {
 
     const response = await service.getRoom(idUser, idRoom);
     res.send(response);
+  },
+
+  GET_historyGame: async (req, res) => {
+    const { page } = req.query;
+    const idUser = req.user.id;
+    const response = await service.getHistoryGame(idUser, page);
+    res.send({ success: true, message: "success", data: response });
+  },
+
+  GET_historyDetailGame: async (req, res) => {
+    const idUser = req.user.id;
+    const { idGame } = req.query;
+
+    console.log("GET_historyDetailGame");
+
+    const response = await service.getHistoryDetailGame(idUser, idGame);
+    res.send({ success: true, message: "success", data: response });
   },
 };
 
