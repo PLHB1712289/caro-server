@@ -18,6 +18,11 @@ const DEVELOPMENT_ENVIRONMENT = {
   title: "development environment",
   URL_CLIENT: "http://localhost:3001",
   URL_SERVER: "http://localhost:3000",
+
+  // Demo Local MultiDesktop
+  // URL_CLIENT: "http://10.126.6.245:3001",
+  // URL_SERVER: "http://10.126.6.245:3000",
+
   SECRET_KEY_JWT: "scretkey",
   SECRET_KEY_HASH: 10,
   // MONGO_DB_URL:

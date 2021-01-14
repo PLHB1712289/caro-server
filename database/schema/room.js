@@ -10,7 +10,7 @@ module.exports = mongoose.model(
     password: { type: String, default: null },
     player1: String,
     player2: { type: String, default: null },
-    limitTime: { type: Number, default: 5 },
+    limitTime: { type: Number, default: 15 },
     isOpen: { type: Boolean, default: true }, // true: open, false: close
     created_at: { type: Date, default: Date.now },
   })

@@ -20,7 +20,13 @@ module.exports = mongoose.model(
       default:
         "https://res.cloudinary.com/dofdj0lqd/image/upload/v1610186880/aqutfu6ccnjdqo9vd3zb.png",
     },
-    createdDate: { type: String },
+    createdDate: {
+      type: String,
+      default: () => {
+        const date = new Date();
+        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+      },
+    },
     fullname: { type: String, default: null },
   })
 );
